@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block title %}Delete {{ label }} — Veloxa{% endblock %}{% block page_title %}Confirm Delete{% endblock %}{% block active %}products{% endblock %}
+{% block content %}
+<div class="card form-card"><div class="confirm-box"><p>Are you sure you want to delete <strong>{{ label }}</strong>? This cannot be undone.</p>
+<form method="post">{% csrf_token %}<div class="form-actions"><button type="submit" class="btn btn-danger">Delete</button><a href="{% url 'product-list' %}" class="btn">Cancel</a></div></form></div></div>
+{% endblock %}

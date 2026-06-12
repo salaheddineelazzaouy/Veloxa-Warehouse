@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block title %}{{ customer.name }} — Customers{% endblock %}{% block page_title %}{{ customer.name }}{% endblock %}{% block active %}customers{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h2>Customer Details</h2><div class="actions-cell"><a href="{% url 'customer-update' pk=customer.pk %}" class="btn btn-sm btn-primary">Edit</a><form method="post" action="{% url 'customer-delete' pk=customer.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Delete</button></form></div></div><div class="card-body"><div class="detail-grid">
+  <div class="detail-field"><div class="detail-label">Name</div><div class="detail-value">{{ customer.name }}</div></div>
+  <div class="detail-field"><div class="detail-label">Phone</div><div class="detail-value">{{ customer.phone|default:"—" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Email</div><div class="detail-value">{{ customer.email|default:"—" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Address</div><div class="detail-value">{{ customer.address|default:"—" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value">{% if customer.is_anonymized %}<span class="badge badge-muted">Anonymized</span>{% else %}<span class="badge badge-success">Active</span>{% endif %}</div></div>
+  <div class="detail-field"><div class="detail-label">Since</div><div class="detail-value">{{ customer.created_at|date:"Y-m-d" }}</div></div>
+</div></div></div>
+<a href="{% url 'customer-list' %}" class="btn mt-2">&larr; Back to Customers</a>
+{% endblock %}

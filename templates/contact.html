@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Contact Us{% endblock %}
+{% block page_title %}Contact Us{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px">
+  <div class="card-body">
+    <p style="margin-bottom:16px;color:var(--text-secondary)">Send us a message and our team will get back to you within 24 hours.</p>
+    <form method="post" action="/landing/lead/">
+      {% csrf_token %}
+      <div class="form-group"><label>Name</label><input name="name" class="form-control" placeholder="Your name"></div>
+      <div class="form-group"><label>Email *</label><input name="email" type="email" class="form-control" required placeholder="you@company.ma"></div>
+      <div class="form-group"><label>Company</label><input name="company" class="form-control" placeholder="Company name"></div>
+      <div class="form-group"><label>Message</label><textarea name="message" class="form-control" rows="4" placeholder="How can we help?"></textarea></div>
+      <button class="btn btn-primary">Send Message</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

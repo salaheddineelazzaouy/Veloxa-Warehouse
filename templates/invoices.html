@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block title %}Invoices — Veloxa Warehouse{% endblock %}{% block page_title %}Invoices{% endblock %}{% block active %}invoices{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header"><h2>All Invoices</h2></div><div class="card-body">
+<table class="table"><thead><tr><th>Invoice Ref</th><th>Order Ref</th><th>Customer</th><th>Total</th><th>Date</th><th class="actions-cell">Actions</th></tr></thead>
+<tbody>{% for inv in invoices %}<tr><td><code>{{ inv.invoice_ref }}</code></td><td><code>{{ inv.order_ref }}</code></td><td>{{ inv.customer.name|default:"—" }}</td><td>{{ inv.total }} MAD</td><td>{{ inv.created_at|date:"Y-m-d" }}</td><td class="actions-cell"><a href="{% url 'invoice-detail' pk=inv.pk %}" class="btn btn-sm">View</a><form method="post" action="{% url 'invoice-delete' pk=inv.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Del</button></form></td></tr>{% empty %}<tr><td colspan="6" class="empty">No invoices.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

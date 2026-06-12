@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}{% if location %}Edit {{ location.code }}{% else %}New Location{% endif %}{% endblock %}{% block page_title %}{% if location %}Edit Location{% else %}New Location{% endif %}{% endblock %}{% block active %}locations{% endblock %}
+{% block content %}
+<div class="card form-card"><form method="post">{% csrf_token %}
+  <div class="form-group"><label class="form-label">Code</label><input class="form-control" name="code" value="{{ location.code|default:'' }}" required></div>
+  <div class="form-group"><label class="form-label">Name</label><input class="form-control" name="name" value="{{ location.name|default:'' }}" required></div>
+  <div class="form-check"><input type="checkbox" name="is_active" id="is_active" {% if location.is_active or not location %}checked{% endif %}><label for="is_active">Active</label></div>
+  <div class="form-actions"><button type="submit" class="btn btn-primary">{% if location %}Update{% else %}Create{% endif %}</button><a href="{% url 'location-list' %}" class="btn">Cancel</a></div>
+</form></div>
+{% endblock %}

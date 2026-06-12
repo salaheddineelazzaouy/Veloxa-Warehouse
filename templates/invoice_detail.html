@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block title %}{{ invoice.invoice_ref }} — Invoices{% endblock %}{% block page_title %}Invoice {{ invoice.invoice_ref }}{% endblock %}{% block active %}invoices{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h2>Invoice Details</h2><div class="actions-cell"><form method="post" action="{% url 'invoice-delete' pk=invoice.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Delete</button></form></div></div><div class="card-body"><div class="detail-grid">
+  <div class="detail-field"><div class="detail-label">Invoice Ref</div><div class="detail-value"><code>{{ invoice.invoice_ref }}</code></div></div>
+  <div class="detail-field"><div class="detail-label">Order Ref</div><div class="detail-value"><code>{{ invoice.order_ref }}</code></div></div>
+  <div class="detail-field"><div class="detail-label">Customer</div><div class="detail-value">{{ invoice.customer.name|default:"—" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Total</div><div class="detail-value">{{ invoice.total }} MAD</div></div>
+  <div class="detail-field"><div class="detail-label">Source</div><div class="detail-value">{{ invoice.source }}</div></div>
+  <div class="detail-field"><div class="detail-label">Created By</div><div class="detail-value">{{ invoice.created_by.username }}</div></div>
+  <div class="detail-field"><div class="detail-label">Date</div><div class="detail-value">{{ invoice.created_at|date:"Y-m-d H:i" }}</div></div>
+</div></div></div>
+<div class="card mt-2"><div class="card-header"><h2>Lines</h2></div>
+<div class="card-body">{% if lines %}<table class="table"><thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+<tbody>{% for line in lines %}<tr><td>{{ line.product.sku }} — {{ line.product.name }}</td><td>{{ line.qty }}</td><td>{{ line.unit_price }} MAD</td><td>{{ line.total }} MAD</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No lines.</p>{% endif %}</div></div>
+<a href="{% url 'invoice-list' %}" class="btn mt-2">&larr; Back to Invoices</a>
+{% endblock %}

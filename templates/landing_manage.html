@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Landing Page Management{% endblock %}
+{% block page_title %}Landing Page Content{% endblock %}
+{% block content %}
+<style>
+  .landing-form { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px }
+  .landing-form h3 { margin-bottom: 16px; font-size: 15px; display: flex; align-items: center; gap: 8px }
+  .landing-form h3 i { color: var(--accent) }
+  .inline-flex { display: flex; gap: 10px; align-items: center; flex-wrap: wrap }
+  .card-sm { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px }
+  .card-sm h4 { font-size: 13px; margin-bottom: 6px }
+  .card-sm .meta { font-size: 11px; color: var(--text-secondary) }
+</style>
+
+<!-- Hero Section -->
+<form class="landing-form" method="post" action="/landing/manage/">
+  {% csrf_token %}
+  <input type="hidden" name="_section" value="hero">
+  <h3><i class="fas fa-star"></i> Hero Section</h3>
+  <div class="form-row">
+    <div class="form-group"><label>Headline</label><input name="headline" value="{{ hero.headline|default:'' }}" class="form-control"></div>
+    <div class="form-group"><label>Subtitle</label><textarea name="subtitle" class="form-control">{{ hero.subtitle|default:'' }}</textarea></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label>CTA Text</label><input name="cta_text" value="{{ hero.cta_text|default:'Start free trial' }}" class="form-control"></div>
+    <div class="form-group"><label>CTA Link</label><input name="cta_link" value="{{ hero.cta_link|default:'#contact' }}" class="form-control"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label>Secondary CTA Text</label><input name="secondary_cta_text" value="{{ hero.secondary_cta_text|default:'' }}" class="form-control"></div>
+    <div class="form-group"><label>Secondary CTA Link</label><input name="secondary_cta_link" value="{{ hero.secondary_cta_link|default:'#architecture' }}" class="form-control"></div>
+  </div>
+  <button class="btn btn-primary btn-sm mt-1">Save Hero</button>
+</form>
+
+<!-- Features -->
+<div class="landing-form">
+  <h3><i class="fas fa-th-large"></i> Features <a href="/landing/manage/feature/create/" class="btn btn-primary btn-xs" style="margin-left:auto">+ Add Feature</a></h3>
+  {% for f in features %}
+  <div class="card-sm">
+    <div class="flex" style="justify-content:space-between">
+      <div><i class="{{ f.icon_class }}" style="color:var(--accent);width:24px"></i> <strong>{{ f.title }}</strong> <span class="meta">(order {{ f.order }})</span></div>
+      <div class="inline-flex">
+        <a href="/landing/manage/feature/{{ f.pk }}/edit/" class="btn btn-outline btn-xs">Edit</a>
+        <form method="post" action="/landing/manage/feature/{{ f.pk }}/delete/" style="display:inline">
+          {% csrf_token %}<button class="btn btn-danger btn-xs" onclick="return confirm('Delete this feature?')">Delete</button>
+        </form>
+      </div>
+    </div>
+    <div class="meta">{{ f.description|truncatechars:120 }}</div>
+  </div>
+  {% empty %}<p class="meta">No features yet.</p>{% endfor %}
+</div>
+
+<!-- Trust Cards -->
+<div class="landing-form">
+  <h3><i class="fas fa-shield-alt"></i> Trust Cards <a href="/landing/manage/trust-card/create/" class="btn btn-primary btn-xs" style="margin-left:auto">+ Add Trust Card</a></h3>
+  {% for t in trust_cards %}
+  <div class="card-sm">
+    <div class="flex" style="justify-content:space-between">
+      <div><i class="{{ t.icon_class }}" style="color:var(--accent);width:24px"></i> <strong>{{ t.title }}</strong> <span class="meta">(order {{ t.order }})</span></div>
+      <div class="inline-flex">
+        <a href="/landing/manage/trust-card/{{ t.pk }}/edit/" class="btn btn-outline btn-xs">Edit</a>
+        <form method="post" action="/landing/manage/trust-card/{{ t.pk }}/delete/" style="display:inline">
+          {% csrf_token %}<button class="btn btn-danger btn-xs" onclick="return confirm('Delete?')">Delete</button>
+        </form>
+      </div>
+    </div>
+    <div class="meta">{{ t.description|truncatechars:120 }}</div>
+  </div>
+  {% empty %}<p class="meta">No trust cards yet.</p>{% endfor %}
+</div>
+
+<!-- Pricing Plans -->
+<div class="landing-form">
+  <h3><i class="fas fa-tags"></i> Pricing Plans <a href="/landing/manage/pricing/create/" class="btn btn-primary btn-xs" style="margin-left:auto">+ Add Plan</a></h3>
+  {% for p in pricing_plans %}
+  <div class="card-sm">
+    <div class="flex" style="justify-content:space-between">
+      <div><strong>{{ p.name }}</strong> — {{ p.price }} <span class="meta">(order {{ p.order }})</span>{% if p.is_popular %} <span class="badge badge-primary">Popular</span>{% endif %}</div>
+      <div class="inline-flex">
+        <a href="/landing/manage/pricing/{{ p.pk }}/edit/" class="btn btn-outline btn-xs">Edit</a>
+        <form method="post" action="/landing/manage/pricing/{{ p.pk }}/delete/" style="display:inline">
+          {% csrf_token %}<button class="btn btn-danger btn-xs" onclick="return confirm('Delete?')">Delete</button>
+        </form>
+      </div>
+    </div>
+    <div class="meta">{{ p.period }}</div>
+  </div>
+  {% empty %}<p class="meta">No pricing plans yet.</p>{% endfor %}
+</div>
+
+<!-- CTA Section -->
+<form class="landing-form" method="post" action="/landing/manage/">
+  {% csrf_token %}
+  <input type="hidden" name="_section" value="cta">
+  <h3><i class="fas fa-bullhorn"></i> CTA Section</h3>
+  <div class="form-row">
+    <div class="form-group"><label>Headline</label><input name="headline" value="{{ cta.headline|default:'' }}" class="form-control"></div>
+    <div class="form-group"><label>Subtitle</label><input name="subtitle" value="{{ cta.subtitle|default:'' }}" class="form-control"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label>Button Text</label><input name="button_text" value="{{ cta.button_text|default:'Get early access' }}" class="form-control"></div>
+    <div class="form-group"><label>Placeholder</label><input name="placeholder" value="{{ cta.placeholder|default:'' }}" class="form-control"></div>
+  </div>
+  <div class="form-group"><label>Footnote</label><input name="footnote" value="{{ cta.footnote|default:'' }}" class="form-control"></div>
+  <button class="btn btn-primary btn-sm mt-1">Save CTA</button>
+</form>
+
+<!-- Compliance -->
+<form class="landing-form" method="post" action="/landing/manage/">
+  {% csrf_token %}
+  <input type="hidden" name="_section" value="compliance">
+  <h3><i class="fas fa-gavel"></i> Compliance Section</h3>
+  <div class="form-group"><label>Title</label><input name="title" value="{{ compliance.title|default:'' }}" class="form-control"></div>
+  <div class="form-group"><label>Law Title</label><input name="law_title" value="{{ compliance.law_title|default:'Law 09-08 (CNDP)' }}" class="form-control"></div>
+  <div class="form-group"><label>Items (one per line)</label><textarea name="items" class="form-control" rows="5">{{ compliance.items|default:'' }}</textarea></div>
+  <button class="btn btn-primary btn-sm mt-1">Save Compliance</button>
+</form>
+
+<!-- Site Pages -->
+<div class="landing-form">
+  <h3><i class="fas fa-file-alt"></i> Site Pages <a href="/landing/manage/page/create/" class="btn btn-primary btn-xs" style="margin-left:auto">+ Add Page</a></h3>
+  {% for p in pages %}
+  <div class="card-sm">
+    <div class="flex" style="justify-content:space-between">
+      <div><strong>{{ p.title }}</strong> <span class="meta">/{{ p.slug }}/</span></div>
+      <div class="inline-flex">
+        <a href="/{{ p.slug }}/" class="btn btn-outline btn-xs" target="_blank">View</a>
+        <a href="/landing/manage/page/{{ p.pk }}/edit/" class="btn btn-outline btn-xs">Edit</a>
+        <form method="post" action="/landing/manage/page/{{ p.pk }}/delete/" style="display:inline">
+          {% csrf_token %}<button class="btn btn-danger btn-xs" onclick="return confirm('Delete?')">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% empty %}<p class="meta">No pages yet.</p>{% endfor %}
+</div>
+
+<!-- Leads -->
+<div class="landing-form">
+  <h3><i class="fas fa-envelope"></i> Recent Leads</h3>
+  {% if leads %}
+  <table class="table">
+    <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Company</th><th>Message</th></tr></thead>
+    <tbody>{% for l in leads %}
+      <tr><td>{{ l.created_at|date:"d M Y H:i" }}</td><td>{{ l.name|default:'—' }}</td><td>{{ l.email }}</td><td>{{ l.company|default:'—' }}</td><td class="trunc">{{ l.message|default:'—' }}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+  {% else %}<p class="meta">No leads yet.</p>{% endif %}
+</div>
+{% endblock %}

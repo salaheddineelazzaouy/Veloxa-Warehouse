@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block title %}New Movement{% endblock %}{% block page_title %}Record Stock Movement{% endblock %}{% block active %}movements{% endblock %}
+{% block content %}
+<div class="card form-card"><form method="post">{% csrf_token %}
+  <div class="form-group"><label class="form-label">Product</label><select class="form-control" name="product" required>{% for p in products %}<option value="{{ p.pk }}">{{ p.sku }} — {{ p.name }}</option>{% endfor %}</select></div>
+  <div class="form-group"><label class="form-label">Type</label><select class="form-control" name="type" required><option value="inbound">Inbound</option><option value="outbound">Outbound</option><option value="adjustment">Adjustment</option></select></div>
+  <div class="form-group"><label class="form-label">Quantity</label><input class="form-control" name="qty" type="number" required placeholder="Use positive number; outbound will be auto-negated"><small style="display:block;color:var(--text-muted);font-size:11px;margin-top:4px">Enter a positive number. Outbound is stored as negative automatically.</small></div>
+  <div class="form-group"><label class="form-label">Reference</label><input class="form-control" name="reference" required placeholder="e.g. PO-001 or SO-001"></div>
+  <div class="form-group"><label class="form-label">Location</label><select class="form-control" name="location"><option value="">— None —</option>{% for loc in locations %}<option value="{{ loc.pk }}">{{ loc.code }} — {{ loc.name }}</option>{% endfor %}</select></div>
+  <div class="form-group"><label class="form-label">Note</label><textarea class="form-control" name="note"></textarea></div>
+  <div class="form-actions"><button type="submit" class="btn btn-primary">Record Movement</button><a href="{% url 'movement-list' %}" class="btn">Cancel</a></div>
+</form></div>
+{% endblock %}

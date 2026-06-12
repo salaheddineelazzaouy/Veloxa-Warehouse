@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block title %}Movements — Veloxa Warehouse{% endblock %}{% block page_title %}Stock Movements{% endblock %}{% block active %}movements{% endblock %}
+{% block content %}
+<div style="margin-bottom:16px"><a href="{% url 'movement-create' %}" class="btn btn-primary">+ Record Movement</a></div>
+<div class="card"><div class="card-header"><h2>Ledger (Last 100)</h2></div><div class="card-body">
+<table class="table"><thead><tr><th>Time</th><th>Type</th><th>Product</th><th>Qty</th><th>Reference</th><th>By</th><th class="actions-cell">Actions</th></tr></thead>
+<tbody>{% for m in movements %}<tr><td>{{ m.created_at|date:"Y-m-d H:i" }}</td><td>{% if m.type == 'inbound' %}<span class="badge badge-success">IN</span>{% elif m.type == 'outbound' %}<span class="badge badge-danger">OUT</span>{% else %}<span class="badge badge-warning">ADJ</span>{% endif %}</td><td>{{ m.product.sku }}</td><td class="{% if m.qty > 0 %}text-success{% else %}text-danger{% endif %}">{{ m.qty|stringformat:"+d" }}</td><td><code>{{ m.reference }}</code></td><td>{{ m.created_by.username }}</td><td class="actions-cell"><a href="{% url 'movement-detail' pk=m.pk %}" class="btn btn-sm">View</a></td></tr>{% empty %}<tr><td colspan="7" class="empty">No movements recorded.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

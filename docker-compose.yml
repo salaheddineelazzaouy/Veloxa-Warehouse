@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: veloxa_warehouse
+      POSTGRES_USER: veloxa
+      POSTGRES_PASSWORD: change-me
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veloxa"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SECRET_KEY: dev-secret-key-not-for-production
+      DJANGO_DEBUG: "True"
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: veloxa_warehouse
+      DB_USER: veloxa
+      DB_PASSWORD: change-me
+      DB_HOST: db
+      DB_PORT: "5432"
+      FIELD_ENCRYPTION_KEY: b_k4Yb2K_YPpAu9pn5w5Yy2bB0iM3-6k8JYy2Un4zOo=
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:

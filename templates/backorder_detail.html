@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block title %}BO-{{ backorder.id }} — Backorders{% endblock %}{% block page_title %}Backorder BO-{{ backorder.id }}{% endblock %}{% block active %}backorders{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h2>Backorder Details</h2><div class="actions-cell"><a href="{% url 'backorder-update' pk=backorder.pk %}" class="btn btn-sm btn-primary">Edit</a><form method="post" action="{% url 'backorder-delete' pk=backorder.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Delete</button></form></div></div><div class="card-body"><div class="detail-grid">
+  <div class="detail-field"><div class="detail-label">Product</div><div class="detail-value">{{ backorder.product.sku }} — {{ backorder.product.name }}</div></div>
+  <div class="detail-field"><div class="detail-label">Quantity</div><div class="detail-value">{{ backorder.qty }}</div></div>
+  <div class="detail-field"><div class="detail-label">Fulfilled</div><div class="detail-value">{{ backorder.qty_fulfilled }}</div></div>
+  <div class="detail-field"><div class="detail-label">Remaining</div><div class="detail-value">{{ backorder.qty_remaining }}</div></div>
+  <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value">{% if backorder.status == 'open' %}<span class="badge badge-danger">Open</span>{% elif backorder.status == 'partially_fulfilled' %}<span class="badge badge-warning">Partial</span>{% else %}<span class="badge badge-success">Closed</span>{% endif %}</div></div>
+  <div class="detail-field"><div class="detail-label">Sales Ref</div><div class="detail-value"><code>{{ backorder.sales_order_ref }}</code></div></div>
+  <div class="detail-field"><div class="detail-label">Created By</div><div class="detail-value">{{ backorder.created_by.username }}</div></div>
+  <div class="detail-field"><div class="detail-label">Created</div><div class="detail-value">{{ backorder.created_at|date:"Y-m-d H:i" }}</div></div>
+</div></div></div>
+<a href="{% url 'backorder-list' %}" class="btn mt-2">&larr; Back to Backorders</a>
+{% endblock %}

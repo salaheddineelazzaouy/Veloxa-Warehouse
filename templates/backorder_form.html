@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}{% if backorder %}Edit BO-{{ backorder.id }}{% else %}New Backorder{% endif %}{% endblock %}{% block page_title %}{% if backorder %}Edit Backorder{% else %}New Backorder{% endif %}{% endblock %}{% block active %}backorders{% endblock %}
+{% block content %}
+<div class="card form-card"><form method="post">{% csrf_token %}
+  <div class="form-group"><label class="form-label">Product</label><select class="form-control" name="product" {% if backorder %}disabled{% endif %}>{% for p in products %}<option value="{{ p.pk }}" {% if backorder and backorder.product.pk == p.pk %}selected{% endif %}>{{ p.sku }} — {{ p.name }}</option>{% endfor %}</select>{% if backorder %}<input type="hidden" name="product" value="{{ backorder.product.pk }}">{% endif %}</div>
+  <div class="form-group"><label class="form-label">Quantity</label><input class="form-control" name="qty" type="number" value="{{ backorder.qty|default:'' }}" required></div>
+  <div class="form-group"><label class="form-label">Sales Order Ref</label><input class="form-control" name="sales_order_ref" value="{{ backorder.sales_order_ref|default:'' }}"></div>
+  <div class="form-actions"><button type="submit" class="btn btn-primary">{% if backorder %}Update{% else %}Create{% endif %}</button><a href="{% url 'backorder-list' %}" class="btn">Cancel</a></div>
+</form></div>
+{% endblock %}

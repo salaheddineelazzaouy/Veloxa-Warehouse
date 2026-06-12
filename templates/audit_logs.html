@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block title %}Audit Logs — Veloxa Warehouse{% endblock %}{% block page_title %}Audit Logs{% endblock %}{% block active %}audit{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header"><h2>All Audit Log Entries</h2></div><div class="card-body">
+<table class="table"><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Table</th><th>Row ID</th><th class="actions-cell">Actions</th></tr></thead>
+<tbody>{% for log in audit_logs %}<tr><td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td><td>{{ log.user.username|default:"—" }}</td><td>{% if log.action == 'create' %}<span class="badge badge-success">CREATE</span>{% elif log.action == 'update' %}<span class="badge badge-warning">UPDATE</span>{% elif log.action == 'delete' %}<span class="badge badge-danger">DELETE</span>{% else %}<span class="badge badge-info">READ_PII</span>{% endif %}</td><td><code>{{ log.table_name }}</code></td><td>{{ log.row_id|default:"—" }}</td><td class="actions-cell"><a href="{% url 'audit-log-detail' pk=log.pk %}" class="btn btn-sm">View</a></td></tr>{% empty %}<tr><td colspan="6" class="empty">No audit logs.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

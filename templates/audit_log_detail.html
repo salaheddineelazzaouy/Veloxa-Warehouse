@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block title %}Audit Log #{{ log.id }}{% endblock %}{% block page_title %}Audit Log #{{ log.id }}{% endblock %}{% block active %}audit{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header"><h2>Entry Details</h2></div><div class="card-body"><div class="detail-grid">
+  <div class="detail-field"><div class="detail-label">Timestamp</div><div class="detail-value">{{ log.timestamp|date:"Y-m-d H:i:s" }}</div></div>
+  <div class="detail-field"><div class="detail-label">User</div><div class="detail-value">{{ log.user.username|default:"—" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Action</div><div class="detail-value">{% if log.action == 'create' %}<span class="badge badge-success">CREATE</span>{% elif log.action == 'update' %}<span class="badge badge-warning">UPDATE</span>{% elif log.action == 'delete' %}<span class="badge badge-danger">DELETE</span>{% else %}<span class="badge badge-info">READ_PII</span>{% endif %}</div></div>
+  <div class="detail-field"><div class="detail-label">Table</div><div class="detail-value"><code>{{ log.table_name }}</code></div></div>
+  <div class="detail-field"><div class="detail-label">Row ID</div><div class="detail-value">{{ log.row_id|default:"—" }}</div></div>
+  <div class="detail-field"><div class="detail-label">IP Address</div><div class="detail-value">{{ log.ip_address|default:"—" }}</div></div>
+  <div class="detail-field full-width"><div class="detail-label">User Agent</div><div class="detail-value"><code>{{ log.user_agent|default:"—" }}</code></div></div>
+  {% if log.changes %}<div class="detail-field full-width"><div class="detail-label">Changes</div><div class="detail-value"><pre style="background:var(--bg-primary);padding:12px;border-radius:var(--radius-sm);font-size:12px;overflow-x:auto">{{ log.changes|pprint }}</pre></div></div>{% endif %}
+</div></div></div>
+<a href="{% url 'audit-log-list' %}" class="btn mt-2">&larr; Back to Audit Logs</a>
+{% endblock %}

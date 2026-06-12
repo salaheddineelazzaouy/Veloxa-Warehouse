@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block title %}Movement {{ movement.id }} — Movements{% endblock %}{% block page_title %}Movement #{{ movement.id }}{% endblock %}{% block active %}movements{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header"><h2>Movement Details</h2></div><div class="card-body"><div class="detail-grid">
+  <div class="detail-field"><div class="detail-label">Type</div><div class="detail-value">{% if movement.type == 'inbound' %}<span class="badge badge-success">INBOUND</span>{% elif movement.type == 'outbound' %}<span class="badge badge-danger">OUTBOUND</span>{% else %}<span class="badge badge-warning">ADJUSTMENT</span>{% endif %}</div></div>
+  <div class="detail-field"><div class="detail-label">Product</div><div class="detail-value">{{ movement.product.sku }} — {{ movement.product.name }}</div></div>
+  <div class="detail-field"><div class="detail-label">Quantity</div><div class="detail-value {% if movement.qty > 0 %}text-success{% else %}text-danger{% endif %}">{{ movement.qty|stringformat:"+d" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Reference</div><div class="detail-value"><code>{{ movement.reference }}</code></div></div>
+  <div class="detail-field"><div class="detail-label">Location</div><div class="detail-value">{{ movement.location.code|default:"—" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Created By</div><div class="detail-value">{{ movement.created_by.username }}</div></div>
+  <div class="detail-field"><div class="detail-label">Created At</div><div class="detail-value">{{ movement.created_at|date:"Y-m-d H:i:s" }}</div></div>
+  {% if movement.note %}<div class="detail-field full-width"><div class="detail-label">Note</div><div class="detail-value">{{ movement.note }}</div></div>{% endif %}
+</div></div></div>
+<a href="{% url 'movement-list' %}" class="btn mt-2">&larr; Back to Movements</a>
+{% endblock %}

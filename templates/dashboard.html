@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Veloxa Warehouse{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block active %}dashboard{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Products</div>
+    <div class="stat-value">{{ stats.products }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Locations</div>
+    <div class="stat-value">{{ stats.locations }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Stock Movements</div>
+    <div class="stat-value">{{ stats.movements }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Customers</div>
+    <div class="stat-value">{{ stats.customers }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Backorders</div>
+    <div class="stat-value {% if stats.open_backorders > 0 %}text-warning{% endif %}">{{ stats.backorders }}</div>
+    {% if stats.open_backorders > 0 %}<div class="stat-sub">{{ stats.open_backorders }} open</div>{% endif %}
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Invoices</div>
+    <div class="stat-value">{{ stats.invoices }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Audit Logs</div>
+    <div class="stat-value">{{ stats.audit_logs }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Users</div>
+    <div class="stat-value">{{ stats.users }}</div>
+  </div>
+</div>
+
+<div class="card mt-2">
+  <div class="card-header"><h2>Quick Links</h2></div>
+  <div class="card-body quick-links">
+    <a href="{% url 'product-list' %}" class="ql-btn">Manage Products</a>
+    <a href="{% url 'movement-list' %}" class="ql-btn">View Movements</a>
+    <a href="{% url 'invoice-list' %}" class="ql-btn">View Invoices</a>
+    <a href="{% url 'backorder-list' %}" class="ql-btn">View Backorders</a>
+  </div>
+</div>
+{% endblock %}

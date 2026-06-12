@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Edit{% else %}Create{% endif %} {{ model_type }}{% endblock %}
+{% block page_title %}{% if object %}Edit{% else %}Create{% endif %} {{ model_type }}{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      {% for field in fields %}
+      <div class="form-group">
+        <label>{{ field.2 }}</label>
+        {% if field.1 == "textarea" %}
+        <textarea name="{{ field.0 }}" class="form-control" rows="5">{{ field.3|default:"" }}</textarea>
+        {% elif field.1 == "checkbox" %}
+        <input type="checkbox" name="{{ field.0 }}" class="form-checkbox" {% if field.3 %}checked{% endif %}>
+        {% else %}
+        <input type="{{ field.1 }}" name="{{ field.0 }}" value="{{ field.3|default:"" }}" class="form-control">
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="flex" style="margin-top:16px">
+        <button class="btn btn-primary">Save</button>
+        <a href="{% url 'landing-manage' %}" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

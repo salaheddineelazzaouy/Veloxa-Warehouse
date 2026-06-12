@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}{{ location.code }} — Locations{% endblock %}{% block page_title %}{{ location.code }} — {{ location.name }}{% endblock %}{% block active %}locations{% endblock %}
+{% block content %}
+<div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h2>Location Details</h2><div class="actions-cell"><a href="{% url 'location-update' pk=location.pk %}" class="btn btn-sm btn-primary">Edit</a><form method="post" action="{% url 'location-delete' pk=location.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Delete</button></form></div></div><div class="card-body"><div class="detail-grid">
+  <div class="detail-field"><div class="detail-label">Code</div><div class="detail-value"><code>{{ location.code }}</code></div></div>
+  <div class="detail-field"><div class="detail-label">Name</div><div class="detail-value">{{ location.name }}</div></div>
+  <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value">{% if location.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</div></div>
+</div></div></div>
+<a href="{% url 'location-list' %}" class="btn mt-2">&larr; Back to Locations</a>
+{% endblock %}

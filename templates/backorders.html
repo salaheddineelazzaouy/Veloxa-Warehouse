@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block title %}Backorders — Veloxa Warehouse{% endblock %}{% block page_title %}Backorders{% endblock %}{% block active %}backorders{% endblock %}
+{% block content %}
+<div style="margin-bottom:16px"><a href="{% url 'backorder-create' %}" class="btn btn-primary">+ New Backorder</a></div>
+<div class="card"><div class="card-header"><h2>All Backorders</h2></div><div class="card-body">
+<table class="table"><thead><tr><th>ID</th><th>Product</th><th>Qty</th><th>Remaining</th><th>Status</th><th class="actions-cell">Actions</th></tr></thead>
+<tbody>{% for bo in backorders %}<tr><td><code>BO-{{ bo.id }}</code></td><td>{{ bo.product.sku }}</td><td>{{ bo.qty }}</td><td>{{ bo.qty_remaining }}</td><td>{% if bo.status == 'open' %}<span class="badge badge-danger">Open</span>{% elif bo.status == 'partially_fulfilled' %}<span class="badge badge-warning">Partial</span>{% else %}<span class="badge badge-success">Closed</span>{% endif %}</td><td class="actions-cell"><a href="{% url 'backorder-detail' pk=bo.pk %}" class="btn btn-sm">View</a><a href="{% url 'backorder-update' pk=bo.pk %}" class="btn btn-sm">Edit</a><form method="post" action="{% url 'backorder-delete' pk=bo.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Del</button></form></td></tr>{% empty %}<tr><td colspan="6" class="empty">No backorders.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

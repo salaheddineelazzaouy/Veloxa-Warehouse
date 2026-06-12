@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streamline — AI Workflow Automation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #fff;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page {
+      max-width: 1440px;
+      margin: 0 auto;
+      box-shadow: 0 0 80px rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+
+    /* ── Shared ── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
+    .section-title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+    .section-sub {
+      font-size: 16px;
+      color: #64748b;
+      max-width: 560px;
+      line-height: 1.6;
+    }
+    .center { text-align: center; }
+    .center .section-sub { margin: 0 auto 48px; }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo i { color: #3b82f6; font-size: 22px; }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a {
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #475569;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: #3b82f6; }
+    .nav-cta {
+      padding: 9px 22px;
+      background: #3b82f6;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: box-shadow .2s;
+    }
+    .nav-cta:hover { box-shadow: 0 4px 16px rgba(59,130,246,.35); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 72px 48px 0;
+      background: linear-gradient(135deg, #fff 0%, #f0f9ff 50%, #e0f2fe 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero .container { display: flex; align-items: center; gap: 64px; }
+    .hero-text { flex: 1; min-width: 0; padding-bottom: 80px; }
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -.8px;
+      color: #0f172a;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: #3b82f6; }
+    .hero .sub {
+      font-size: 18px;
+      color: #64748b;
+      line-height: 1.7;
+      margin-bottom: 32px;
+      max-width: 480px;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 30px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .25s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 20px rgba(59,130,246,.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59,130,246,.4); }
+    .btn-outline {
+      background: transparent;
+      color: #334155;
+      border: 1.5px solid #cbd5e1;
+    }
+    .btn-outline:hover { border-color: #3b82f6; color: #3b82f6; }
+    .hero-visual {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      padding-bottom: 80px;
+    }
+    .mockup-frame {
+      width: 100%;
+      aspect-ratio: 16/10;
+      background: linear-gradient(160deg, #1e293b, #0f172a);
+      border-radius: 16px;
+      box-shadow: 0 24px 64px rgba(15,23,42,.25);
+      overflow: hidden;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .mockup-top {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-dot:nth-child(1) { background: #ef4444; }
+    .mockup-dot:nth-child(2) { background: #f59e0b; }
+    .mockup-dot:nth-child(3) { background: #10b981; }
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 12px;
+      flex: 1;
+    }
+    .mockup-sidebar {
+      background: rgba(255,255,255,.06);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .mockup-bar { height: 8px; background: rgba(255,255,255,.08); border-radius: 4px; }
+    .mockup-bar:nth-child(1) { width: 70%; }
+    .mockup-bar:nth-child(2) { width: 50%; }
+    .mockup-bar:nth-child(3) { width: 60%; }
+    .mockup-bar:nth-child(4) { width: 40%; }
+    .mockup-main {
+      background: rgba(255,255,255,.06);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .mockup-chart {
+      height: 50px;
+      background: linear-gradient(90deg, rgba(59,130,246,.3), rgba(59,130,246,.1));
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .mockup-chart::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent 20%, rgba(255,255,255,.04) 40%, transparent 60%);
+    }
+    .mockup-row {
+      display: flex;
+      gap: 8px;
+    }
+    .mockup-chip { height: 24px; background: rgba(59,130,246,.2); border-radius: 4px; flex: 1; }
+    .mockup-chip:nth-child(2) { flex: 2; background: rgba(255,255,255,.06); }
+
+    /* ── Features ── */
+    .features {
+      padding: 96px 0 80px;
+      background: #fff;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin-top: 16px;
+    }
+    .feature-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 32px 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.04);
+      transition: all .25s;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.08);
+    }
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #fff;
+      margin-bottom: 18px;
+    }
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.7;
+    }
+
+    /* ── Testimonials ── */
+    .testimonials {
+      padding: 88px 0 80px;
+      background: #f8fafc;
+    }
+    .testimonial-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+    .testimonial-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 32px 32px 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.04);
+      border: 1px solid #e2e8f0;
+    }
+    .testimonial-stars {
+      color: #f59e0b;
+      font-size: 14px;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
+    .testimonial-card .quote {
+      font-size: 14.5px;
+      line-height: 1.7;
+      color: #334155;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .test-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .test-avatar.a1 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .test-avatar.a2 { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .test-info h4 { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .test-info span { font-size: 13px; color: #64748b; }
+
+    /* ── Pricing ── */
+    .pricing {
+      padding: 88px 0 80px;
+      background: #fff;
+    }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+    }
+    .pricing-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 36px 28px 32px;
+      position: relative;
+      transition: all .25s;
+    }
+    .pricing-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,.06); }
+    .pricing-card.pro {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f6, 0 12px 40px rgba(59,130,246,.1);
+    }
+    .badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3b82f6;
+      color: #fff;
+      padding: 4px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .pricing-card .price {
+      font-size: 38px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .pricing-card .price span {
+      font-size: 16px;
+      font-weight: 500;
+      color: #64748b;
+    }
+    .pricing-card .plan-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #3b82f6;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 20px;
+    }
+    .pricing-card ul {
+      list-style: none;
+      margin-bottom: 28px;
+    }
+    .pricing-card ul li {
+      padding: 7px 0;
+      font-size: 14px;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pricing-card ul li i {
+      color: #10b981;
+      font-size: 12px;
+    }
+    .pricing-card .btn {
+      width: 100%;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    /* ── CTA Banner ── */
+    .cta-banner {
+      background: #1e293b;
+      padding: 64px 48px;
+      text-align: center;
+    }
+    .cta-banner h2 {
+      font-size: 32px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -.5px;
+    }
+    .cta-banner p {
+      color: #94a3b8;
+      font-size: 16px;
+      margin-bottom: 28px;
+    }
+    .cta-form {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .cta-form input {
+      padding: 14px 20px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #fff;
+      font-size: 15px;
+      font-family: inherit;
+      width: 340px;
+      max-width: 100%;
+      outline: none;
+    }
+    .cta-form input::placeholder { color: #64748b; }
+    .cta-form input:focus { border-color: #3b82f6; }
+    .cta-form .btn {
+      padding: 14px 32px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: box-shadow .2s;
+    }
+    .cta-form .btn:hover { box-shadow: 0 4px 20px rgba(59,130,246,.35); }
+
+    /* ── Footer ── */
+    footer {
+      background: #0f172a;
+      padding: 48px 48px 36px;
+    }
+    footer .container {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      padding: 0;
+    }
+    footer .col-brand .logo { color: #fff; margin-bottom: 12px; }
+    footer .col-brand p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.7;
+      max-width: 300px;
+    }
+    footer h4 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+    }
+    footer ul { list-style: none; }
+    footer ul li { margin-bottom: 10px; }
+    footer ul li a {
+      font-size: 14px;
+      color: #475569;
+      text-decoration: none;
+      transition: color .2s;
+    }
+    footer ul li a:hover { color: #3b82f6; }
+    .footer-bottom {
+      max-width: 1200px;
+      margin: 36px auto 0;
+      padding: 20px 0 0;
+      border-top: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #475569;
+    }
+    .social-icons { display: flex; gap: 14px; }
+    .social-icons a {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all .2s;
+    }
+    .social-icons a:hover { background: rgba(59,130,246,.12); color: #3b82f6; }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Nav -->
+    <nav>
+      <div class="logo"><i class="fas fa-bolt"></i> Streamline</div>
+      <ul class="nav-links">
+        <li><a href="#">Features</a></li>
+        <li><a href="#">Pricing</a></li>
+        <li><a href="#">Resources</a></li>
+        <li><a href="#">Company</a></li>
+      </ul>
+      <div><a href="#" class="nav-cta">Get Started</a></div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-text">
+          <h1>Streamline Your<br>Workflow with <span>AI</span></h1>
+          <p class="sub">Automate repetitive tasks in minutes — no code required. Connect your tools, set your rules, and let AI handle the busywork.</p>
+          <div class="hero-actions">
+            <a href="#" class="btn btn-primary">Start Free Trial</a>
+            <a href="#" class="btn btn-outline"><i class="fas fa-play"></i> Watch Demo</a>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="mockup-frame">
+            <div class="mockup-top">
+              <div class="mockup-dot"></div>
+              <div class="mockup-dot"></div>
+              <div class="mockup-dot"></div>
+            </div>
+            <div class="mockup-grid">
+              <div class="mockup-sidebar">
+                <div class="mockup-bar"></div>
+                <div class="mockup-bar"></div>
+                <div class="mockup-bar"></div>
+                <div class="mockup-bar"></div>
+              </div>
+              <div class="mockup-main">
+                <div class="mockup-chart"></div>
+                <div class="mockup-row"><div class="mockup-chip"></div><div class="mockup-chip"></div></div>
+                <div class="mockup-row"><div class="mockup-chip"></div><div class="mockup-chip"></div></div>
+                <div class="mockup-row"><div class="mockup-chip"></div><div class="mockup-chip"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+      <div class="container center">
+        <h2 class="section-title">Everything you need to scale</h2>
+        <p class="section-sub">Built for teams that want to move faster without sacrificing quality or security.</p>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)"><i class="fas fa-chart-line"></i></div>
+            <h3>Real-time Analytics</h3>
+            <p>Monitor every workflow with live dashboards and drill-down reports. Spot bottlenecks before they slow you down and optimize on the fly.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)"><i class="fas fa-plug"></i></div>
+            <h3>Seamless Integrations</h3>
+            <p>Connect Slack, Notion, GitHub, Salesforce, and 200+ other tools out of the box. Your stack works the way you do — no manual syncs.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fas fa-shield"></i></div>
+            <h3>Enterprise Security</h3>
+            <p>SOC 2 Type II certified with end-to-end encryption, role-based access, and audit logs. Your data stays yours, always.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+      <div class="container center">
+        <h2 class="section-title">Trusted by engineering teams</h2>
+        <p class="section-sub">See what our customers say about transforming their daily workflow.</p>
+        <div class="testimonial-grid">
+          <div class="testimonial-card">
+            <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+            <p class="quote">"Streamline cut our onboarding time for new hires by 60%. What used to take three days of manual setup is now fully automated. Our engineers ship features faster than ever."</p>
+            <div class="testimonial-author">
+              <div class="test-avatar a1">JD</div>
+              <div class="test-info"><h4>Jessica Du</h4><span>VP of Engineering, Vana Health</span></div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+            <p class="quote">"We replaced a patchwork of six disconnected tools with Streamline. Our ops team reclaimed 20 hours per week, and error rates dropped by 85% across the board."</p>
+            <div class="testimonial-author">
+              <div class="test-avatar a2">MR</div>
+              <div class="test-info"><h4>Marcus Rivera</h4><span>CTO, Nexus Digital</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing">
+      <div class="container center">
+        <h2 class="section-title">Simple, transparent pricing</h2>
+        <p class="section-sub">No hidden fees. No surprise bills. Upgrade or cancel anytime.</p>
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <div class="plan-name">Basic</div>
+            <div class="price">$19 <span>/mo</span></div>
+            <ul>
+              <li><i class="fas fa-check"></i> 5 active workflows</li>
+              <li><i class="fas fa-check"></i> 1,000 automation runs</li>
+              <li><i class="fas fa-check"></i> Email &amp; chat support</li>
+              <li><i class="fas fa-check"></i> 30-day history</li>
+            </ul>
+            <a href="#" class="btn btn-outline">Get started</a>
+          </div>
+          <div class="pricing-card pro">
+            <div class="badge">Most Popular</div>
+            <div class="plan-name">Pro</div>
+            <div class="price">$49 <span>/mo</span></div>
+            <ul>
+              <li><i class="fas fa-check"></i> Unlimited workflows</li>
+              <li><i class="fas fa-check"></i> 50,000 automation runs</li>
+              <li><i class="fas fa-check"></i> Priority support (2h SLA)</li>
+              <li><i class="fas fa-check"></i> 1-year history + exports</li>
+            </ul>
+            <a href="#" class="btn btn-primary">Get started</a>
+          </div>
+          <div class="pricing-card">
+            <div class="plan-name">Enterprise</div>
+            <div class="price">Custom <span></span></div>
+            <ul>
+              <li><i class="fas fa-check"></i> Unlimited everything</li>
+              <li><i class="fas fa-check"></i> Dedicated success manager</li>
+              <li><i class="fas fa-check"></i> SSO &amp; custom contracts</li>
+              <li><i class="fas fa-check"></i> On-premise deployment</li>
+            </ul>
+            <a href="#" class="btn btn-outline">Contact sales</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Banner -->
+    <section class="cta-banner">
+      <h2>Ready to scale?</h2>
+      <p>Join 4,000+ teams already automating with Streamline.</p>
+      <form class="cta-form">
+        <input type="email" placeholder="Enter your work email" required>
+        <button type="submit" class="btn">Get Early Access</button>
+      </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <div class="col-brand">
+          <div class="logo"><i class="fas fa-bolt"></i> Streamline</div>
+          <p>AI-powered workflow automation for modern teams. Built in San Francisco, used worldwide.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#">Features</a></li>
+            <li><a href="#">Integrations</a></li>
+            <li><a href="#">Changelog</a></li>
+            <li><a href="#">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">API Reference</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Community</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Security</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom container">
+        <span>&copy; 2026 Streamline, Inc. All rights reserved.</span>
+        <div class="social-icons">
+          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

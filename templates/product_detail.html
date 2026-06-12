@@ -1,0 +1,24 @@
+{% extends 'base.html' %}{% block title %}{{ product.sku }} — Veloxa Warehouse{% endblock %}{% block page_title %}{{ product.sku }} — {{ product.name }}{% endblock %}{% block active %}products{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h2>Product Details</h2><div class="actions-cell"><a href="{% url 'product-update' pk=product.pk %}" class="btn btn-sm btn-primary">Edit</a><form method="post" action="{% url 'product-delete' pk=product.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Delete</button></form></div></div>
+  <div class="card-body"><div class="detail-grid">
+    <div class="detail-field"><div class="detail-label">SKU</div><div class="detail-value"><code>{{ product.sku }}</code></div></div>
+    <div class="detail-field"><div class="detail-label">Name</div><div class="detail-value">{{ product.name }}</div></div>
+    <div class="detail-field"><div class="detail-label">Unit</div><div class="detail-value">{{ product.unit }}</div></div>
+    <div class="detail-field"><div class="detail-label">Cost Price</div><div class="detail-value">{{ product.cost_price }} MAD</div></div>
+    <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value">{% if product.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</div></div>
+    <div class="detail-field"><div class="detail-label">Current Stock</div><div class="detail-value">{{ net_stock }}</div></div>
+    <div class="detail-field"><div class="detail-label">Created</div><div class="detail-value">{{ product.created_at|date:"Y-m-d H:i" }}</div></div>
+    <div class="detail-field"><div class="detail-label">Updated</div><div class="detail-value">{{ product.updated_at|date:"Y-m-d H:i" }}</div></div>
+    {% if product.description %}<div class="detail-field full-width"><div class="detail-label">Description</div><div class="detail-value">{{ product.description }}</div></div>{% endif %}
+  </div></div></div>
+<div class="card mt-2">
+  <div class="card-header"><h2>Stock Movements</h2></div>
+  <div class="card-body">
+    {% if movements %}<table class="table"><thead><tr><th>Time</th><th>Type</th><th>Qty</th><th>Reference</th><th>Location</th><th>By</th></tr></thead>
+    <tbody>{% for m in movements %}<tr><td>{{ m.created_at|date:"Y-m-d H:i" }}</td><td>{% if m.type == 'inbound' %}<span class="badge badge-success">IN</span>{% elif m.type == 'outbound' %}<span class="badge badge-danger">OUT</span>{% else %}<span class="badge badge-warning">ADJ</span>{% endif %}</td><td class="{% if m.qty > 0 %}text-success{% else %}text-danger{% endif %}">{{ m.qty|stringformat:"+d" }}</td><td><code>{{ m.reference }}</code></td><td>{{ m.location.code|default:"—" }}</td><td>{{ m.created_by.username }}</td></tr>{% endfor %}</tbody></table>
+    {% else %}<p class="empty">No movements yet.</p>{% endif %}
+  </div></div>
+<a href="{% url 'product-list' %}" class="btn mt-2">&larr; Back to Products</a>
+{% endblock %}
