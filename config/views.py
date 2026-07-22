@@ -396,7 +396,35 @@ def customer_delete(request, pk):
 
 @login_required
 def backorder_list(request):
-    return render(request, "backorders.html", {"backorders": BackOrder.objects.select_related("product", "created_by").all()})
+    from django.db.models import Q
+    qs = BackOrder.objects.select_related("product", "created_by").all()
+
+    status = request.GET.get("status", "")
+    search = request.GET.get("q", "")
+
+    if status in ("open", "partially_fulfilled", "closed"):
+        qs = qs.filter(status=status)
+
+    if search:
+        qs = qs.filter(
+            Q(product__sku__icontains=search)
+            | Q(product__name__icontains=search)
+            | Q(sales_order_ref__icontains=search)
+        )
+
+    stats = {
+        "total": BackOrder.objects.count(),
+        "open": BackOrder.objects.filter(status="open").count(),
+        "partial": BackOrder.objects.filter(status="partially_fulfilled").count(),
+        "closed": BackOrder.objects.filter(status="closed").count(),
+    }
+
+    return render(request, "backorders.html", {
+        "backorders": qs,
+        "stats": stats,
+        "active_status": status,
+        "search_query": search,
+    })
 
 @login_required
 def backorder_detail(request, pk):

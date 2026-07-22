@@ -1,7 +1,86 @@
 {% extends 'base.html' %}{% block title %}Backorders — Veloxa Warehouse{% endblock %}{% block page_title %}Backorders{% endblock %}{% block active %}backorders{% endblock %}
 {% block content %}
-<div style="margin-bottom:16px"><a href="{% url 'backorder-create' %}" class="btn btn-primary">+ New Backorder</a></div>
-<div class="card"><div class="card-header"><h2>All Backorders</h2></div><div class="card-body">
-<table class="table"><thead><tr><th>ID</th><th>Product</th><th>Qty</th><th>Remaining</th><th>Status</th><th class="actions-cell">Actions</th></tr></thead>
-<tbody>{% for bo in backorders %}<tr><td><code>BO-{{ bo.id }}</code></td><td>{{ bo.product.sku }}</td><td>{{ bo.qty }}</td><td>{{ bo.qty_remaining }}</td><td>{% if bo.status == 'open' %}<span class="badge badge-danger">Open</span>{% elif bo.status == 'partially_fulfilled' %}<span class="badge badge-warning">Partial</span>{% else %}<span class="badge badge-success">Closed</span>{% endif %}</td><td class="actions-cell"><a href="{% url 'backorder-detail' pk=bo.pk %}" class="btn btn-sm">View</a><a href="{% url 'backorder-update' pk=bo.pk %}" class="btn btn-sm">Edit</a><form method="post" action="{% url 'backorder-delete' pk=bo.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Del</button></form></td></tr>{% empty %}<tr><td colspan="6" class="empty">No backorders.</td></tr>{% endfor %}</tbody></table></div></div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+  <div style="display:flex;gap:8px">
+    <a href="{% url 'backorder-list' %}" class="btn {% if not active_status %}btn-primary{% endif %}">All ({{ stats.total }})</a>
+    <a href="{% url 'backorder-list' %}?status=open{% if search_query %}&q={{ search_query }}{% endif %}" class="btn {% if active_status == 'open' %}btn-primary{% endif %}">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--danger)"></span> Open ({{ stats.open }})
+    </a>
+    <a href="{% url 'backorder-list' %}?status=partially_fulfilled{% if search_query %}&q={{ search_query }}{% endif %}" class="btn {% if active_status == 'partially_fulfilled' %}btn-primary{% endif %}">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning)"></span> Partial ({{ stats.partial }})
+    </a>
+    <a href="{% url 'backorder-list' %}?status=closed{% if search_query %}&q={{ search_query }}{% endif %}" class="btn {% if active_status == 'closed' %}btn-primary{% endif %}">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success)"></span> Closed ({{ stats.closed }})
+    </a>
+  </div>
+  <a href="{% url 'backorder-create' %}" class="btn btn-primary">+ New Backorder</a>
+</div>
+
+<div class="card">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+    <form method="get" style="display:flex;gap:8px;flex:1;max-width:400px">
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Search by SKU, product name, or order ref..." class="form-control" style="flex:1">
+      {% if active_status %}<input type="hidden" name="status" value="{{ active_status }}">{% endif %}
+      <button type="submit" class="btn btn-sm">Search</button>
+      {% if search_query %}<a href="{% url 'backorder-list' %}{% if active_status %}?status={{ active_status }}{% endif %}" class="btn btn-sm btn-danger">Clear</a>{% endif %}
+    </form>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Product</th>
+          <th>Sales Order Ref</th>
+          <th style="text-align:right">Qty</th>
+          <th style="text-align:right">Remaining</th>
+          <th>Status</th>
+          <th>Created By</th>
+          <th style="text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for bo in backorders %}
+        <tr>
+          <td><code>BO-{{ bo.id }}</code></td>
+          <td>
+            <div style="font-weight:500">{{ bo.product.name }}</div>
+            <div style="font-size:12px;color:var(--text-muted)">{{ bo.product.sku }}</div>
+          </td>
+          <td class="cell-mono">{{ bo.sales_order_ref }}</td>
+          <td style="text-align:right;font-weight:500">{{ bo.qty }}</td>
+          <td style="text-align:right;font-weight:500">
+            {% if bo.qty_remaining > 0 %}
+              <span class="text-danger">{{ bo.qty_remaining }}</span>
+            {% else %}
+              <span class="text-success">0</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if bo.status == 'open' %}<span class="badge badge-danger">Open</span>
+            {% elif bo.status == 'partially_fulfilled' %}<span class="badge badge-warning">Partial</span>
+            {% else %}<span class="badge badge-success">Closed</span>{% endif %}
+          </td>
+          <td style="color:var(--text-secondary)">{{ bo.created_by.username }}</td>
+          <td style="text-align:right" class="actions-cell">
+            <a href="{% url 'backorder-detail' pk=bo.pk %}" class="btn btn-sm">View</a>
+            <a href="{% url 'backorder-update' pk=bo.pk %}" class="btn btn-sm">Edit</a>
+            <form method="post" action="{% url 'backorder-delete' pk=bo.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-danger">Del</button></form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="empty">
+          {% if search_query or active_status %}
+            No backorders match your filters.
+          {% else %}
+            No backorders yet.
+          {% endif %}
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 {% endblock %}
