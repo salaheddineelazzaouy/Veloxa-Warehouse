@@ -12,6 +12,7 @@ api_root = {
     "finance": "invoices, invoices/create, cogs/<id>",
     "crm": "customers, customers/<id>/anonymize",
     "audit": "logs, anomalies",
+    "subscriptions": "plans, my-subscription, request-payment, payment-history, check-limits",
 }
 
 def api_index(request):
@@ -30,8 +31,11 @@ urlpatterns = [
     path("api/crm/", include("apps.crm.api.urls")),
     path("api/audit/", include("apps.audit.api.urls")),
     path("api/landing/", include("apps.landing.api.urls")),
+    path("api/subscriptions/", include("apps.subscriptions.urls")),
     # Template views
     path("login/", views.login_view, name="login"),
+    path("signup/", views.signup_view, name="signup"),
+    path("app/", views.app_view, name="app"),
     path("logout/", views.logout_view, name="logout"),
     path("profile/", views.profile_view, name="profile"),
     path("", views.landing, name="landing"),
@@ -53,6 +57,13 @@ urlpatterns = [
     path("legal/", views.site_page, {"slug": "legal"}, name="legal"),
     path("contact/", views.contact_page, name="contact"),
     path("dashboard/", views.dashboard, name="dashboard"),
+
+    # Category CRUD
+    path("categories/", views.category_list, name="category-list"),
+    path("categories/create/", views.category_create, name="category-create"),
+    path("categories/<int:pk>/", views.category_detail, name="category-detail"),
+    path("categories/<int:pk>/edit/", views.category_update, name="category-update"),
+    path("categories/<int:pk>/delete/", views.category_delete, name="category-delete"),
 
     # Product CRUD
     path("products/", views.product_list, name="product-list"),
@@ -87,8 +98,9 @@ urlpatterns = [
     path("backorders/<int:pk>/edit/", views.backorder_update, name="backorder-update"),
     path("backorders/<int:pk>/delete/", views.backorder_delete, name="backorder-delete"),
 
-    # Invoice (read / delete)
+    # Invoice (create / read / delete)
     path("invoices/", views.invoice_list, name="invoice-list"),
+    path("invoices/create/", views.invoice_create, name="invoice-create"),
     path("invoices/<int:pk>/", views.invoice_detail, name="invoice-detail"),
     path("invoices/<int:pk>/delete/", views.invoice_delete, name="invoice-delete"),
 
@@ -98,3 +110,4 @@ urlpatterns = [
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

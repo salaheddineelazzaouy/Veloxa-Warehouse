@@ -1,0 +1,2 @@
+{% extends 'base.html' %}{% block title %}Delete {{ label }}{% endblock %}{% block page_title %}Confirm Delete{% endblock %}{% block active %}categories{% endblock %}
+{% block content %}<div class="card form-card"><div class="confirm-box"><p>Are you sure you want to delete <strong>{{ label }}</strong>?</p><form method="post">{% csrf_token %}<div class="form-actions"><button type="submit" class="btn btn-danger">Delete</button><a href="{% url 'category-list' %}" class="btn">Cancel</a></div></form></div></div>{% endblock %}

@@ -1,15 +1,21 @@
 {% extends "base.html" %}
 {% block title %}{% if object %}Edit{% else %}Create{% endif %} {{ model_type }}{% endblock %}
 {% block page_title %}{% if object %}Edit{% else %}Create{% endif %} {{ model_type }}{% endblock %}
+{% block extra_head %}
+{{ block.super }}
+<script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+{% endblock %}
 {% block content %}
-<div class="card" style="max-width:600px">
+<div class="card" style="max-width:800px">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}
       {% for field in fields %}
       <div class="form-group">
         <label>{{ field.2 }}</label>
-        {% if field.1 == "textarea" %}
+        {% if field.1 == "ckeditor" %}
+        <textarea name="{{ field.0 }}" id="id_{{ field.0 }}" class="form-control" rows="15">{{ field.3|default:"" }}</textarea>
+        {% elif field.1 == "textarea" %}
         <textarea name="{{ field.0 }}" class="form-control" rows="5">{{ field.3|default:"" }}</textarea>
         {% elif field.1 == "checkbox" %}
         <input type="checkbox" name="{{ field.0 }}" class="form-checkbox" {% if field.3 %}checked{% endif %}>
@@ -25,4 +31,13 @@
     </form>
   </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  {% for field in fields %}
+  {% if field.1 == "ckeditor" %}
+  CKEDITOR.replace("id_{{ field.0 }}");
+  {% endif %}
+  {% endfor %}
+</script>
 {% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}{% block title %}{{ category.name }} — Veloxa Warehouse{% endblock %}{% block page_title %}Category: {{ category.name }}{% endblock %}{% block active %}categories{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h2>Category Details</h2><div class="actions-cell"><a href="{% url 'category-update' pk=category.pk %}" class="btn btn-sm btn-primary">Edit</a><form method="post" action="{% url 'category-delete' pk=category.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Delete</button></form></div></div>
+  <div class="card-body"><div class="detail-grid">
+    <div class="detail-field"><div class="detail-label">Name</div><div class="detail-value">{{ category.name }}</div></div>
+    <div class="detail-field"><div class="detail-label">Description</div><div class="detail-value">{{ category.description|default:"—" }}</div></div>
+    <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value">{% if category.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</div></div>
+    <div class="detail-field"><div class="detail-label">Created</div><div class="detail-value">{{ category.created_at|date:"Y-m-d H:i" }}</div></div>
+    <div class="detail-field"><div class="detail-label">Products</div><div class="detail-value">{{ category.products.count }}</div></div>
+  </div></div></div>
+
+<div class="card mt-2">
+  <div class="card-header"><h2>Products in this Category ({{ products|length }})</h2></div>
+  <div class="card-body">
+    {% if products %}
+    <table class="table"><thead><tr><th>SKU</th><th>Name</th><th>Unit</th><th>Price</th><th>Stock</th><th class="actions-cell">Actions</th></tr></thead>
+    <tbody>{% for p in products %}<tr><td><code>{{ p.sku }}</code></td><td>{{ p.name }}</td><td>{{ p.unit.abbreviation|default:"—" }}</td><td>{{ p.cost_price }} MAD</td><td>{{ p.net_stock }}</td><td class="actions-cell"><a href="{% url 'product-detail' pk=p.pk %}" class="btn btn-sm">View</a></td></tr>{% endfor %}</tbody></table>
+    {% else %}<p class="empty">No products in this category.</p>{% endif %}
+  </div>
+</div>
+<a href="{% url 'category-list' %}" class="btn mt-2">&larr; Back to Categories</a>
+{% endblock %}

@@ -1,8 +1,6 @@
 """Tests for backorder services — isolated deficit tracking."""
 import pytest
-from apps.backorder.models import BackOrder
 from apps.backorder.services import create_backorder, fulfill_backorder
-from apps.warehouse.services import receive_purchase_order
 
 
 class TestBackOrder:

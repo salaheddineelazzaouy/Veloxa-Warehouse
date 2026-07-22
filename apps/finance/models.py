@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from apps.tenants.managers import TenantAwareManager
 
 
 class Invoice(models.Model):
@@ -8,10 +9,20 @@ class Invoice(models.Model):
     customer = models.ForeignKey(
         "crm.Customer", on_delete=models.PROTECT, null=True, blank=True
     )
+    customer_ice = models.CharField(max_length=15, blank=True)
+    customer_identifiant_fiscal = models.CharField(max_length=30, blank=True)
+    customer_taxe_professionnelle = models.CharField(max_length=30, blank=True)
+    customer_registre_commerce = models.CharField(max_length=30, blank=True)
     total = models.DecimalField(max_digits=14, decimal_places=2)
     source = models.CharField(max_length=16, default="pos")
     created_by = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
+    tenant = models.ForeignKey(
+        "tenants.Tenant", on_delete=models.CASCADE,
+        null=True, blank=True, related_name="%(class)s_set",
+    )
+
+    objects = TenantAwareManager()
 
     class Meta:
         db_table = "finance_invoice"
@@ -26,6 +37,12 @@ class InvoiceLine(models.Model):
     qty = models.IntegerField()
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     total = models.DecimalField(max_digits=14, decimal_places=2)
+    tenant = models.ForeignKey(
+        "tenants.Tenant", on_delete=models.CASCADE,
+        null=True, blank=True, related_name="%(class)s_set",
+    )
+
+    objects = TenantAwareManager()
 
     class Meta:
         db_table = "finance_invoiceline"

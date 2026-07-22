@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from apps.tenants.managers import TenantAwareManager
 
 
 class BackOrder(models.Model):
@@ -20,6 +21,12 @@ class BackOrder(models.Model):
     created_by = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    tenant = models.ForeignKey(
+        "tenants.Tenant", on_delete=models.CASCADE,
+        null=True, blank=True, related_name="%(class)s_set",
+    )
+
+    objects = TenantAwareManager()
 
     class Meta:
         db_table = "backorder_backorder"

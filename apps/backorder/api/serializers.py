@@ -15,5 +15,12 @@ class BackOrderSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+
+class BackOrderCreateSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField(min_value=1)
+    qty = serializers.IntegerField(min_value=1)
+    sales_order_ref = serializers.CharField(max_length=64, required=False, allow_blank=True)
+
+
 class FulfillSerializer(serializers.Serializer):
     qty = serializers.IntegerField(min_value=1)

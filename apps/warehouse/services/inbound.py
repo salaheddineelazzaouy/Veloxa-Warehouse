@@ -38,6 +38,7 @@ def receive_purchase_order(
             note=note,
             location_id=location_id,
             created_by=user,
+            tenant=user.tenant,
         )
 
         logger.info(

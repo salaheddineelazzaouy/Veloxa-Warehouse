@@ -39,11 +39,24 @@
   </div>
 </div>
 
+{% if subscription %}
+<div class="card mt-2">
+  <div class="card-header"><h2>Subscription</h2></div>
+  <div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap">
+    <div><span class="stat-label">Plan</span><div class="stat-value" style="font-size:18px">{{ subscription.plan_name }}</div></div>
+    <div><span class="stat-label">Status</span><div>{% if subscription.status == 'active' %}<span class="badge badge-success">{{ subscription.status }}</span>{% elif subscription.status == 'pending_payment' %}<span class="badge badge-warning">{{ subscription.status }}</span>{% else %}<span class="badge badge-muted">{{ subscription.status }}</span>{% endif %}</div></div>
+    <div><span class="stat-label">Price</span><div class="stat-value" style="font-size:18px">{{ subscription.price_display }}</div></div>
+    {% if subscription.end_date %}<div><span class="stat-label">Renewal</span><div>{{ subscription.end_date|date:"Y-m-d" }}</div></div>{% endif %}
+  </div>
+</div>
+{% endif %}
+
 <div class="card mt-2">
   <div class="card-header"><h2>Quick Links</h2></div>
   <div class="card-body quick-links">
     <a href="{% url 'product-list' %}" class="ql-btn">Manage Products</a>
     <a href="{% url 'movement-list' %}" class="ql-btn">View Movements</a>
+    <a href="{% url 'invoice-create' %}" class="ql-btn">Create Invoice</a>
     <a href="{% url 'invoice-list' %}" class="ql-btn">View Invoices</a>
     <a href="{% url 'backorder-list' %}" class="ql-btn">View Backorders</a>
   </div>

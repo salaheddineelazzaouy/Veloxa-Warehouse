@@ -1,14 +1,17 @@
 import re
 from rest_framework import serializers
-from ..models import Product, StockMovement, Location
+from ..models import Product, StockMovement
 
 
 class ProductSerializer(serializers.ModelSerializer):
     stock = serializers.SerializerMethodField()
+    category_name = serializers.CharField(source="category.name", read_only=True, default=None)
+    unit_name = serializers.CharField(source="unit.abbreviation", read_only=True, default=None)
 
     class Meta:
         model = Product
-        fields = ("id", "sku", "name", "description", "unit", "cost_price",
+        fields = ("id", "sku", "name", "description", "category", "category_name",
+                  "unit", "unit_name", "cost_price",
                   "is_active", "stock", "created_at", "updated_at")
         read_only_fields = ("id", "created_at", "updated_at")
 
@@ -20,7 +23,8 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ("id", "sku", "name", "description", "unit", "cost_price", "is_active")
+        fields = ("id", "sku", "name", "description", "category", "unit",
+                  "cost_price", "is_active")
         read_only_fields = ("id",)
 
     def validate_sku(self, value):

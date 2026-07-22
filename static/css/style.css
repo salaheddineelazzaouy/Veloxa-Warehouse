@@ -530,3 +530,59 @@ select.form-control { cursor: pointer; }
   .profile-layout { flex-direction: column; }
   .profile-side { flex: none; width: 100%; }
 }
+
+/* === CKEditor dark theme overrides === */
+.cke {
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+.cke_top {
+  background: var(--bg-secondary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+.cke_bottom {
+  background: var(--bg-secondary) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+.cke_toolgroup,
+.cke_combo_button,
+.cke_button {
+  background: transparent !important;
+  border-color: var(--border-color) !important;
+}
+.cke_button_icon { filter: invert(0.7); }
+.cke_button_label { color: var(--text-secondary) !important; }
+.cke_combo_text { color: var(--text-primary) !important; }
+.cke_combo_arrow { border-top-color: var(--text-secondary) !important; }
+.cke_toolbar_separator { background-color: var(--border-color) !important; }
+.cke_dialog {
+  background: var(--bg-secondary) !important;
+}
+.cke_dialog_body {
+  border-color: var(--border-color) !important;
+}
+.cke_dialog_title {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+.cke_dialog_contents {
+  background: var(--bg-primary) !important;
+}
+.cke_dialog_footer {
+  background: var(--bg-secondary) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+.cke_dialog_tab {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+.cke_dialog_ui_input_text,
+.cke_dialog_ui_input_textarea {
+  background: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+.cke_dialog_ui_labeled_label { color: var(--text-secondary) !important; }

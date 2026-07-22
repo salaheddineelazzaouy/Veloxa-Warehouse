@@ -1,7 +1,6 @@
 import logging
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db import transaction
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -10,6 +9,10 @@ User = get_user_model()
 def create_user(username: str, email: str, password: str, role: str = "viewer", **extra) -> User:
     if role not in dict(User.ROLE_CHOICES):
         raise ValueError(f"Invalid role: {role}")
+    if "tenant" not in extra or extra.get("tenant") is None:
+        from apps.tenants.models import Tenant
+        tenant = Tenant.objects.first()
+        extra["tenant"] = tenant
     user = User.objects.create_user(
         username=username,
         email=email,

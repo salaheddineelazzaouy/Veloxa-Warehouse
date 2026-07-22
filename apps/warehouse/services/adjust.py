@@ -30,6 +30,7 @@ def adjustment(
             reference=f"ADJ-{uuid4().hex[:8].upper()}",
             note=f"{reason} (approved by {approved_by})" if approved_by else reason,
             created_by=user,
+            tenant=user.tenant,
         )
 
         logger.info(

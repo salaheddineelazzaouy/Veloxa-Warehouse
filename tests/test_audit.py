@@ -1,5 +1,4 @@
 """Tests for audit logging — PII-safe, immutable audit trail."""
-import pytest
 from apps.audit.models import AuditLog
 from apps.audit.services import log_access
 

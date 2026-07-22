@@ -3,19 +3,29 @@ from ..models import Invoice, InvoiceLine
 
 
 class InvoiceLineSerializer(serializers.ModelSerializer):
+    product_sku = serializers.CharField(source="product.sku", read_only=True, default=None)
+    product_name = serializers.CharField(source="product.name", read_only=True, default=None)
+
     class Meta:
         model = InvoiceLine
-        fields = ("id", "product_id", "qty", "unit_price", "total")
+        fields = ("id", "product_id", "product_sku", "product_name",
+                  "qty", "unit_price", "total")
         read_only_fields = ("id", "total")
 
 
 class InvoiceSerializer(serializers.ModelSerializer):
     lines = InvoiceLineSerializer(many=True, read_only=True)
+    customer_name = serializers.CharField(source="customer.name", read_only=True, default=None)
+    created_by_username = serializers.CharField(source="created_by.username", read_only=True, default=None)
 
     class Meta:
         model = Invoice
-        fields = ("id", "invoice_ref", "order_ref", "customer_id", "total",
-                  "source", "created_by", "created_at", "lines")
+        fields = ("id", "invoice_ref", "order_ref",
+                  "customer_id", "customer_name",
+                  "customer_ice", "customer_identifiant_fiscal",
+                  "customer_taxe_professionnelle", "customer_registre_commerce",
+                  "total", "source", "created_by", "created_by_username",
+                  "created_at", "lines")
         read_only_fields = fields
 
 

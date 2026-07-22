@@ -389,9 +389,11 @@ function openModal(type, data){
     html = `<div class="modal-h"><span>Add Customer</span><button class="close" onclick="closeModal()">&times;</button></div>
       <div class="modal-b">
         <div class="fg"><label>Name</label><input id="cName" required></div>
+        <div class="fg"><label>Tax ID / ICE</label><input id="cTaxId" placeholder="e.g. 001234567000055"></div>
         <div class="fg"><label>Email</label><input id="cEmail" type="email" placeholder="customer@example.ma"></div>
         <div class="fg"><label>Phone <span class="text-sm text-muted">(encrypted at rest)</span></label><input id="cPhone" placeholder="+212XXXXXXXXX" required></div>
         <div class="fg"><label>Address <span class="text-sm text-muted">(encrypted at rest)</span></label><textarea id="cAddr"></textarea></div>
+        <div class="fg"><label class="checkbox-label" style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)"><input type="checkbox" id="cActive" checked> Customer is active</label></div>
         <div class="info-box"><i class="fas fa-lock"></i> Phone and address encrypted with AES-256-GCM.</div>
       </div>
       <div class="modal-f">
@@ -682,10 +684,10 @@ async function renderDashboard(){
     const openBO = (backorders || []).filter(b => b.status !== 'closed').length
     const recentMovements = Array.isArray(movements) ? movements : (movements?.results || [])
 
-    const canEdit = canEdit()
+    const hasEdit = canEdit()
     return `
       <div class="pg-h"><h1>Dashboard</h1>
-        ${canEdit ? `<div class="actions">
+        ${hasEdit ? `<div class="actions">
           <button class="btn btn-p btn-sm" onclick="openModal('inbound')"><i class="fas fa-plus"></i> Receive</button>
           <button class="btn btn-o btn-sm" onclick="openModal('outbound')"><i class="fas fa-minus"></i> Ship</button>
           <button class="btn btn-o btn-sm" onclick="openModal('adjustment')"><i class="fas fa-sliders"></i> Adjust</button>
@@ -712,7 +714,7 @@ async function renderDashboard(){
           </table>
         </div></div>
       </div>
-      ${!canEdit ? '<div class="info-box"><i class="fas fa-eye"></i> You are logged in as <strong>' + (currentUser?.role || 'viewer') + '</strong>. Some actions are restricted.</div>' : ''}`
+      ${!hasEdit ? '<div class="info-box"><i class="fas fa-eye"></i> You are logged in as <strong>' + (currentUser?.role || 'viewer') + '</strong>. Some actions are restricted.</div>' : ''}`
   } catch(e) {
     return '<div class="warn-box"><i class="fas fa-exclamation-triangle"></i> Failed to load dashboard: ' + e.message + '</div>'
   }
@@ -750,10 +752,10 @@ async function renderInventory(){
       }
     }
 
-    const canEdit = canEdit()
+    const hasEdit = canEdit()
     return `
       <div class="pg-h"><h1>Inventory</h1>
-        ${canEdit ? `<div class="actions">
+        ${hasEdit ? `<div class="actions">
           <button class="btn btn-p btn-sm" onclick="openModal('inbound')"><i class="fas fa-plus"></i> Receive</button>
           <button class="btn btn-o btn-sm" onclick="openModal('outbound')"><i class="fas fa-minus"></i> Ship</button>
           <button class="btn btn-o btn-sm" onclick="openModal('adjustment')"><i class="fas fa-sliders"></i> Adjust</button>
@@ -807,15 +809,15 @@ async function renderBackorders(){
     const backorders = await apiFetchJSON('/backorder/') || []
     const products = await apiFetchJSON('/warehouse/products/').catch(() => [])
     const data = Array.isArray(backorders) ? backorders : (backorders.results || [])
-    const canEdit = canEdit()
+    const hasEdit = canEdit()
     return `
       <div class="pg-h"><h1>Back-orders</h1>
-        ${canEdit ? `<button class="btn btn-p btn-sm" onclick="openModal('create_backorder')"><i class="fas fa-plus"></i> New Back-order</button>` : ''}
+        ${hasEdit ? `<button class="btn btn-p btn-sm" onclick="openModal('create_backorder')"><i class="fas fa-plus"></i> New Back-order</button>` : ''}
       </div>
-      ${canEdit ? '' : '<div class="info-box"><i class="fas fa-eye"></i> View-only mode.</div>'}
+      ${hasEdit ? '' : '<div class="info-box"><i class="fas fa-eye"></i> View-only mode.</div>'}
       <div class="card"><div class="card-h"><span>All Back-orders</span></div>
         <div class="card-b"><div class="tbl-wrap">
-          <table class="tbl"><thead><tr><th>ID</th><th>Product</th><th>Requested</th><th>Fulfilled</th><th>Status</th><th>Sales Ref</th>${canEdit?'<th></th>':''}</tr></thead>
+          <table class="tbl"><thead><tr><th>ID</th><th>Product</th><th>Requested</th><th>Fulfilled</th><th>Status</th><th>Sales Ref</th>${hasEdit?'<th></th>':''}</tr></thead>
           <tbody>${data.length ? data.map(bo => {
             const p = products.find(x => x.id === bo.product)
             return `<tr><td><code>#${bo.id}</code></td>
@@ -824,7 +826,7 @@ async function renderBackorders(){
             <td>${bo.fulfilled_qty || 0}</td>
             <td>${bo.status === 'open' ? '<span class="bdg bdg-r">Open</span>' : bo.status === 'partial' ? '<span class="bdg bdg-y">Partial</span>' : '<span class="bdg bdg-g">Closed</span>'}</td>
             <td><code>${bo.sales_order_ref || '—'}</code></td>
-            ${canEdit ? `<td>${bo.status !== 'closed' ? '<button class="btn btn-g btn-xs" onclick="openModal(\'fulfill\',' + JSON.stringify({...bo, product_name: p ? p.name : ''}).replace(/"/g,'&quot;') + ')"><i class="fas fa-check"></i> Fulfill</button>' : '—'}</td>` : ''}</tr>`
+            ${hasEdit ? `<td>${bo.status !== 'closed' ? '<button class="btn btn-g btn-xs" onclick="openModal(\'fulfill\',' + JSON.stringify({...bo, product_name: p ? p.name : ''}).replace(/"/g,'&quot;') + ')"><i class="fas fa-check"></i> Fulfill</button>' : '—'}</td>` : ''}</tr>`
           }).join('') : '<tr><td colspan="7" class="empty">No back-orders.</td></tr>'}</tbody>
           </table>
         </div></div>
@@ -935,20 +937,20 @@ async function renderCustomers(){
   try {
     const customers = await apiFetchJSON('/crm/customers/') || []
     const data = Array.isArray(customers) ? customers : (customers.results || [])
-    const edit = canEdit()
+    const hasEdit = canEdit()
     return `
-      <div class="pg-h"><h1>Customers</h1>${edit ? '<button class="btn btn-p btn-sm" onclick="openModal(\'customer\')"><i class="fas fa-plus"></i> Add Customer</button>' : ''}</div>
+      <div class="pg-h"><h1>Customers</h1>${hasEdit ? '<button class="btn btn-p btn-sm" onclick="openModal(\'customer\')"><i class="fas fa-plus"></i> Add Customer</button>' : ''}</div>
       <div class="card"><div class="card-h"><span>All Customers</span></div>
         <div class="card-b"><div class="tbl-wrap">
-          <table class="tbl"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Address</th><th>Status</th>${edit?'<th></th>':''}</tr></thead>
+          <table class="tbl"><thead><tr><th>Name</th><th>Tax ID</th><th>Email</th><th>Phone</th><th>Active</th>${hasEdit?'<th></th>':''}</tr></thead>
           <tbody>${data.length ? data.map(c =>
             `<tr>
               <td>${c.is_anonymized ? '<i>[REDACTED]</i>' : c.name}</td>
+              <td>${c.tax_id || '—'}</td>
               <td>${c.email || '—'}</td>
               <td>${c.phone ? '<i class="fas fa-lock" style="color:var(--accent);font-size:11px;margin-right:4px"></i><span class="mono">[ENCRYPTED]</span>' : '—'}</td>
-              <td class="trunc">${c.address ? '<i class="fas fa-lock" style="color:var(--accent);font-size:11px;margin-right:4px"></i><span class="mono">[ENCRYPTED]</span>' : '—'}</td>
-              <td>${c.is_anonymized ? '<span class="bdg bdg-n">Anonymized</span>' : '<span class="bdg bdg-g">Active</span>'}</td>
-              ${edit ? `<td>${!c.is_anonymized ? '<button class="btn btn-d btn-xs" onclick="openModal(\'anonymize\',' + JSON.stringify(c).replace(/"/g,'&quot;') + ')">Anonymize</button>' : '—'}</td>` : ''}
+              <td>${c.is_anonymized ? '<span class="bdg bdg-n">Anon</span>' : c.is_active ? '<span class="bdg bdg-g">Active</span>' : '<span class="bdg bdg-n">Inactive</span>'}</td>
+              ${hasEdit ? `<td>${!c.is_anonymized ? '<button class="btn btn-d btn-xs" onclick="openModal(\'anonymize\',' + JSON.stringify(c).replace(/"/g,'&quot;') + ')">Anonymize</button>' : '—'}</td>` : ''}
             </tr>`
           ).join('') : '<tr><td colspan="6" class="empty">No customers.</td></tr>'}</tbody>
           </table>
@@ -1083,12 +1085,14 @@ async function submitCustomer(){
   const email = document.getElementById('cEmail')?.value.trim()
   const phone = document.getElementById('cPhone')?.value.trim()
   const addr = document.getElementById('cAddr')?.value.trim()
+  const taxId = document.getElementById('cTaxId')?.value.trim()
+  const isActive = document.getElementById('cActive')?.checked ?? true
   if(!name){ toast('Name is required', 'e'); return }
   showModalSpin()
   try {
     await apiFetchJSON('/crm/customers/', {
       method: 'POST',
-      body: JSON.stringify({ name, email, phone, address: addr })
+      body: JSON.stringify({ name, email, phone, address: addr, tax_id: taxId, is_active: isActive })
     })
     closeModal()
     toast('Customer ' + name + ' added', 's')

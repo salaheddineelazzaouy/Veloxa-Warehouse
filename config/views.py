@@ -5,10 +5,10 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.db.models import Sum
 from django.db.models.deletion import ProtectedError
 from django.contrib import messages
-from apps.warehouse.models import Product, Location, StockMovement
+from apps.warehouse.models import Product, Location, StockMovement, Category, Unit
 from apps.backorder.models import BackOrder
 from apps.crm.models import Customer
-from apps.finance.models import Invoice, InvoiceLine
+from apps.finance.models import Invoice
 from apps.audit.models import AuditLog
 from apps.landing.models import HeroSection, Feature, TrustCard, PricingPlan, ComplianceSection, CTASection, LandingLead, SitePage
 
@@ -42,6 +42,24 @@ def login_view(request):
     return render(request, "login.html", {"error": error})
 
 
+def signup_view(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    return render(request, "signup.html")
+
+
+def app_view(request):
+    import os
+    from django.http import HttpResponse
+    from django.conf import settings
+    index_path = settings.BASE_DIR.parent / "frontend" / "dist" / "index.html"
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            html = f.read()
+        return HttpResponse(html)
+    return render(request, "app.html")
+
+
 @login_required
 def logout_view(request):
     logout(request)
@@ -49,6 +67,8 @@ def logout_view(request):
 
 @login_required
 def profile_view(request):
+    from apps.subscriptions.models import Subscription
+    sub = Subscription.objects.filter(user=request.user).order_by('-created_at').first()
     email_form = None
     password_form = None
     if request.method == "POST":
@@ -76,10 +96,13 @@ def profile_view(request):
                     for err in errors:
                         messages.error(request, err)
                 return redirect("profile")
-    return render(request, "profile.html", {"email_form": email_form, "password_form": password_form})
+    return render(request, "profile.html", {"email_form": email_form, "password_form": password_form, "subscription": sub})
 
 @login_required
 def dashboard(request):
+    from apps.subscriptions.models import Subscription
+
+    sub = Subscription.objects.filter(user=request.user).order_by('-created_at').first()
     stats = {
         "products": Product.objects.count(),
         "locations": Location.objects.count(),
@@ -91,7 +114,61 @@ def dashboard(request):
         "audit_logs": AuditLog.objects.count(),
         "users": User.objects.count(),
     }
-    return render(request, "dashboard.html", {"stats": stats})
+    return render(request, "dashboard.html", {"stats": stats, "subscription": sub})
+
+# ────────────────────────────── Category ──────────────────────────────
+
+@login_required
+def category_list(request):
+    return render(request, "categories.html", {"categories": Category.objects.all()})
+
+@login_required
+def category_detail(request, pk):
+    from django.db.models import Sum
+    cat = get_object_or_404(Category, pk=pk)
+    products = Product.objects.filter(category=cat).select_related("unit")
+    for p in products:
+        p.net_stock = StockMovement.objects.filter(product=p).aggregate(Sum("qty"))["qty__sum"] or 0
+    return render(request, "category_detail.html", {"category": cat, "products": products})
+
+@login_required
+def category_create(request):
+    if request.method == "POST":
+        Category.objects.create(
+            name=request.POST["name"],
+            description=request.POST.get("description", ""),
+            is_active=request.POST.get("is_active") == "on",
+            tenant=request.user.tenant,
+        )
+        messages.success(request, "Category created.")
+        return redirect("category-list")
+    return render(request, "category_form.html", {"category": None})
+
+@login_required
+def category_update(request, pk):
+    cat = get_object_or_404(Category, pk=pk)
+    if request.method == "POST":
+        cat.name = request.POST["name"]
+        cat.description = request.POST.get("description", "")
+        cat.is_active = request.POST.get("is_active") == "on"
+        cat.save()
+        messages.success(request, "Category updated.")
+        return redirect("category-list")
+    return render(request, "category_form.html", {"category": cat})
+
+@login_required
+def category_delete(request, pk):
+    cat = get_object_or_404(Category, pk=pk)
+    if request.method == "POST":
+        try:
+            cat.delete()
+            messages.success(request, "Category deleted.")
+            return redirect("category-list")
+        except ProtectedError as e:
+            models = set(type(obj)._meta.verbose_name for obj in e.protected_objects)
+            messages.error(request, f"Cannot delete — referenced by {', '.join(sorted(models))}.")
+            return redirect("category-list")
+    return render(request, "category_confirm_delete.html", {"object": cat, "label": f"Category {cat.name}"})
 
 # ────────────────────────────── Product ──────────────────────────────
 
@@ -109,31 +186,45 @@ def product_detail(request, pk):
 @login_required
 def product_create(request):
     if request.method == "POST":
+        cat_id = request.POST.get("category") or None
+        unit_id = request.POST.get("unit") or None
         product = Product.objects.create(
             sku=request.POST["sku"], name=request.POST["name"],
             description=request.POST.get("description", ""),
-            unit=request.POST.get("unit", "pcs"),
+            category_id=cat_id, unit_id=unit_id,
             cost_price=request.POST["cost_price"],
             is_active=request.POST.get("is_active") == "on",
+            tenant=request.user.tenant,
         )
         messages.success(request, "Product created.")
         return redirect("product-detail", pk=product.pk)
-    return render(request, "product_form.html", {"product": None})
+    return render(request, "product_form.html", {
+        "product": None,
+        "categories": Category.objects.filter(is_active=True),
+        "units": Unit.objects.filter(is_active=True),
+    })
 
 @login_required
 def product_update(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == "POST":
+        cat_id = request.POST.get("category") or None
+        unit_id = request.POST.get("unit") or None
         product.sku = request.POST["sku"]
         product.name = request.POST["name"]
         product.description = request.POST.get("description", "")
-        product.unit = request.POST.get("unit", "pcs")
+        product.category_id = cat_id
+        product.unit_id = unit_id
         product.cost_price = request.POST["cost_price"]
         product.is_active = request.POST.get("is_active") == "on"
         product.save()
         messages.success(request, "Product updated.")
         return redirect("product-detail", pk=product.pk)
-    return render(request, "product_form.html", {"product": product})
+    return render(request, "product_form.html", {
+        "product": product,
+        "categories": Category.objects.filter(is_active=True),
+        "units": Unit.objects.filter(is_active=True),
+    })
 
 @login_required
 def product_delete(request, pk):
@@ -167,6 +258,7 @@ def location_create(request):
         Location.objects.create(
             code=request.POST["code"], name=request.POST["name"],
             is_active=request.POST.get("is_active") == "on",
+            tenant=request.user.tenant,
         )
         messages.success(request, "Location created.")
         return redirect("location-list")
@@ -224,6 +316,7 @@ def movement_create(request):
             reference=request.POST["reference"],
             note=request.POST.get("note", ""),
             location=location, created_by=request.user,
+            tenant=request.user.tenant,
         )
         messages.success(request, "Movement recorded.")
         return redirect("movement-list")
@@ -239,15 +332,32 @@ def customer_list(request):
 
 @login_required
 def customer_detail(request, pk):
+    from django.db.models import Sum, Count
+    from decimal import Decimal
+    from apps.finance.models import Invoice
     customer = get_object_or_404(Customer, pk=pk)
-    return render(request, "customer_detail.html", {"customer": customer})
+    invoices = Invoice.objects.filter(customer=customer).select_related("created_by").order_by("-created_at")
+    invoice_count = invoices.count()
+    agg = invoices.aggregate(total=Sum("total"))
+    total_revenue = agg["total"] or Decimal("0")
+    avg_invoice = (total_revenue / invoice_count).quantize(Decimal("0.01")) if invoice_count else Decimal("0")
+    return render(request, "customer_detail.html", {
+        "customer": customer,
+        "invoices": invoices,
+        "invoice_count": invoice_count,
+        "total_revenue": total_revenue,
+        "avg_invoice": avg_invoice,
+    })
 
 @login_required
 def customer_create(request):
     if request.method == "POST":
         Customer.objects.create(
+            tenant=request.user.tenant,
             name=request.POST["name"], phone=request.POST.get("phone", ""),
             email=request.POST.get("email", ""), address=request.POST.get("address", ""),
+            tax_id=request.POST.get("tax_id", ""),
+            is_active=request.POST.get("is_active") == "on",
         )
         messages.success(request, "Customer created.")
         return redirect("customer-list")
@@ -261,6 +371,8 @@ def customer_update(request, pk):
         customer.phone = request.POST.get("phone", "")
         customer.email = request.POST.get("email", "")
         customer.address = request.POST.get("address", "")
+        customer.tax_id = request.POST.get("tax_id", "")
+        customer.is_active = request.POST.get("is_active") == "on"
         customer.save()
         messages.success(request, "Customer updated.")
         return redirect("customer-list")
@@ -298,6 +410,7 @@ def backorder_create(request):
             product_id=request.POST["product"], qty=request.POST["qty"],
             sales_order_ref=request.POST.get("sales_order_ref", ""),
             created_by=request.user,
+            tenant=request.user.tenant,
         )
         messages.success(request, "Backorder created.")
         return redirect("backorder-list")
@@ -331,6 +444,39 @@ def backorder_delete(request, pk):
     return render(request, "backorder_confirm_delete.html", {"object": bo, "label": f"BackOrder BO-{bo.id}"})
 
 # ────────────────────────────── Invoice ──────────────────────────────
+
+@login_required
+def invoice_create(request):
+    from apps.finance.services import create_invoice
+    customers = Customer.objects.all()
+    products = Product.objects.filter(is_active=True)
+    if request.method == "POST":
+        order_ref = request.POST["order_ref"]
+        customer_id = request.POST.get("customer_id") or None
+        product_ids = request.POST.getlist("product_id[]")
+        qtys = request.POST.getlist("qty[]")
+        prices = request.POST.getlist("unit_price[]")
+        lines = []
+        for pid, qty, price in zip(product_ids, qtys, prices):
+            if pid and qty and price:
+                lines.append({
+                    "product_id": int(pid),
+                    "qty": int(qty),
+                    "unit_price": price,
+                })
+        if not lines:
+            messages.error(request, "Add at least one line item.")
+        else:
+            try:
+                create_invoice(order_ref, lines, request.user, customer_id, tenant=request.user.tenant)
+                messages.success(request, "Invoice created.")
+                return redirect("invoice-list")
+            except Exception as e:
+                messages.error(request, f"Error: {e}")
+    return render(request, "invoice_form.html", {
+        "customers": customers,
+        "products": products,
+    })
 
 @login_required
 def invoice_list(request):
@@ -591,7 +737,7 @@ def landing_page_create(request):
     return render(request, "landing_form.html", {"model_type": "Site Page", "fields": [
         ("slug", "text", "Slug (e.g. about, careers)"),
         ("title", "text", "Title"),
-        ("content", "textarea", "Content (HTML)"),
+        ("content", "ckeditor", "Content"),
     ]})
 
 
@@ -608,7 +754,7 @@ def landing_page_update(request, pk):
     return render(request, "landing_form.html", {"model_type": "Site Page", "fields": [
         ("slug", "text", "Slug", obj.slug),
         ("title", "text", "Title", obj.title),
-        ("content", "textarea", "Content (HTML)", obj.content),
+        ("content", "ckeditor", "Content", obj.content),
     ]})
 
 

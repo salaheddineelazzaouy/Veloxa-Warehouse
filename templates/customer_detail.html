@@ -2,11 +2,77 @@
 {% block content %}
 <div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h2>Customer Details</h2><div class="actions-cell"><a href="{% url 'customer-update' pk=customer.pk %}" class="btn btn-sm btn-primary">Edit</a><form method="post" action="{% url 'customer-delete' pk=customer.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Delete</button></form></div></div><div class="card-body"><div class="detail-grid">
   <div class="detail-field"><div class="detail-label">Name</div><div class="detail-value">{{ customer.name }}</div></div>
-  <div class="detail-field"><div class="detail-label">Phone</div><div class="detail-value">{{ customer.phone|default:"—" }}</div></div>
-  <div class="detail-field"><div class="detail-label">Email</div><div class="detail-value">{{ customer.email|default:"—" }}</div></div>
-  <div class="detail-field"><div class="detail-label">Address</div><div class="detail-value">{{ customer.address|default:"—" }}</div></div>
-  <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value">{% if customer.is_anonymized %}<span class="badge badge-muted">Anonymized</span>{% else %}<span class="badge badge-success">Active</span>{% endif %}</div></div>
+  <div class="detail-field"><div class="detail-label">Tax ID / ICE</div><div class="detail-value">{{ customer.tax_id|default:"-" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Phone</div><div class="detail-value">{{ customer.phone|default:"-" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Email</div><div class="detail-value">{{ customer.email|default:"-" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Address</div><div class="detail-value">{{ customer.address|default:"-" }}</div></div>
+  <div class="detail-field"><div class="detail-label">Active</div><div class="detail-value">{% if customer.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</div></div>
+  <div class="detail-field"><div class="detail-label">Anonymized</div><div class="detail-value">{% if customer.is_anonymized %}<span class="badge badge-muted">Yes</span>{% else %}<span class="badge badge-success">No</span>{% endif %}</div></div>
   <div class="detail-field"><div class="detail-label">Since</div><div class="detail-value">{{ customer.created_at|date:"Y-m-d" }}</div></div>
 </div></div></div>
+
+<div class="card mt-2">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+    <h2>Invoices</h2>
+    <a href="{% url 'invoice-create' %}" class="btn btn-sm btn-primary">+ New Invoice</a>
+  </div>
+  <div class="card-body">
+    {% if invoice_count %}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--border)">
+      <div style="padding:18px 20px;border-right:1px solid var(--border)">
+        <div class="stat-label">Total Invoices</div>
+        <div class="stat-value">{{ invoice_count }}</div>
+      </div>
+      <div style="padding:18px 20px;border-right:1px solid var(--border)">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value text-success">{{ total_revenue }} <span style="font-size:14px;font-weight:500">MAD</span></div>
+      </div>
+      <div style="padding:18px 20px">
+        <div class="stat-label">Avg. Invoice</div>
+        <div class="stat-value text-info">{{ avg_invoice }} <span style="font-size:14px;font-weight:500">MAD</span></div>
+      </div>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Invoice Ref</th>
+          <th>Order Ref</th>
+          <th style="text-align:right">Total</th>
+          <th>Source</th>
+          <th>Created By</th>
+          <th>Date</th>
+          <th style="text-align:right">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for inv in invoices %}
+        <tr>
+          <td><code>{{ inv.invoice_ref }}</code></td>
+          <td class="cell-mono">{{ inv.order_ref }}</td>
+          <td style="text-align:right;font-weight:600;color:var(--text-primary)">{{ inv.total }} <span style="font-size:11px;color:var(--text-muted)">MAD</span></td>
+          <td>
+            {% if inv.source == 'pos' %}<span class="badge badge-info">POS</span>
+            {% elif inv.source == 'api' %}<span class="badge badge-success">API</span>
+            {% elif inv.source == 'web' %}<span class="badge badge-warning">WEB</span>
+            {% else %}<span class="badge badge-muted">{{ inv.source }}</span>{% endif %}
+          </td>
+          <td style="color:var(--text-secondary)">{{ inv.created_by.username }}</td>
+          <td style="color:var(--text-secondary)">{{ inv.created_at|date:"d M Y" }}</td>
+          <td style="text-align:right"><a href="{% url 'invoice-detail' pk=inv.pk %}" class="btn btn-sm">View</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="text-align:center;padding:48px 20px">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:16px;opacity:.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <div style="color:var(--text-muted);font-size:14px;margin-bottom:8px">No invoices yet</div>
+      <a href="{% url 'invoice-create' %}" class="btn btn-primary btn-sm">Create first invoice</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
 <a href="{% url 'customer-list' %}" class="btn mt-2">&larr; Back to Customers</a>
 {% endblock %}

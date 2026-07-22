@@ -4,17 +4,21 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import BackOrder
-from ..services import fulfill_backorder
-from .serializers import BackOrderSerializer, FulfillSerializer
+from ..services import create_backorder, fulfill_backorder
+from .serializers import BackOrderSerializer, BackOrderCreateSerializer, FulfillSerializer
 from lib.throttling import BackorderThrottle
 
 logger = logging.getLogger(__name__)
 
 
-class BackOrderListView(generics.ListAPIView):
+class BackOrderListView(generics.ListCreateAPIView):
     queryset = BackOrder.objects.select_related("product").all()
-    serializer_class = BackOrderSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return BackOrderCreateSerializer
+        return BackOrderSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -22,6 +26,22 @@ class BackOrderListView(generics.ListAPIView):
         if status_filter:
             qs = qs.filter(status=status_filter)
         return qs
+
+    def perform_create(self, serializer):
+        bo = create_backorder(
+            product_id=serializer.validated_data["product_id"],
+            missing_qty=serializer.validated_data["qty"],
+            so_ref=serializer.validated_data.get("sales_order_ref", ""),
+            user=self.request.user,
+        )
+        return bo
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        bo = self.perform_create(serializer)
+        out_serializer = BackOrderSerializer(bo)
+        return Response(out_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class FulfillBackOrderView(generics.GenericAPIView):

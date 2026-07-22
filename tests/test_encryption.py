@@ -1,5 +1,4 @@
 """Tests for encryption utilities — AES-256-GCM."""
-import pytest
 from lib.encryption import generate_key, encrypt_value, decrypt_value
 
 

@@ -2,9 +2,11 @@
 {% block content %}
 <div class="card form-card"><form method="post">{% csrf_token %}
   <div class="form-group"><label class="form-label">Name</label><input class="form-control" name="name" value="{{ customer.name|default:'' }}" required></div>
+  <div class="form-group"><label class="form-label">Tax ID / ICE</label><input class="form-control" name="tax_id" value="{{ customer.tax_id|default:'' }}" placeholder="e.g. 001234567000055"></div>
   <div class="form-group"><label class="form-label">Phone</label><input class="form-control" name="phone" value="{{ customer.phone|default:'' }}"></div>
   <div class="form-group"><label class="form-label">Email</label><input class="form-control" name="email" type="email" value="{{ customer.email|default:'' }}"></div>
   <div class="form-group"><label class="form-label">Address</label><textarea class="form-control" name="address">{{ customer.address|default:'' }}</textarea></div>
+  <div class="form-group"><label class="form-label">Active</label><label class="checkbox-label"><input type="checkbox" name="is_active" {% if customer.is_active or not customer %}checked{% endif %}> Customer is active</label></div>
   <div class="form-actions"><button type="submit" class="btn btn-primary">{% if customer %}Update{% else %}Create{% endif %}</button><a href="{% url 'customer-list' %}" class="btn">Cancel</a></div>
 </form></div>
 {% endblock %}

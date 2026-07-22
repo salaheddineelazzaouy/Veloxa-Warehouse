@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Django
+db.sqlite3
+staticfiles/
+media/
+*.mo
+
+# Test / lint cache
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-data/
+
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
+
+# Ad-hoc test scripts
+test_product_api.py
+test_api_live.py

@@ -5,7 +5,8 @@
   <div class="card-body"><div class="detail-grid">
     <div class="detail-field"><div class="detail-label">SKU</div><div class="detail-value"><code>{{ product.sku }}</code></div></div>
     <div class="detail-field"><div class="detail-label">Name</div><div class="detail-value">{{ product.name }}</div></div>
-    <div class="detail-field"><div class="detail-label">Unit</div><div class="detail-value">{{ product.unit }}</div></div>
+    <div class="detail-field"><div class="detail-label">Category</div><div class="detail-value">{{ product.category.name|default:"—" }}</div></div>
+    <div class="detail-field"><div class="detail-label">Unit</div><div class="detail-value">{{ product.unit.abbreviation|default:"—" }}</div></div>
     <div class="detail-field"><div class="detail-label">Cost Price</div><div class="detail-value">{{ product.cost_price }} MAD</div></div>
     <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value">{% if product.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</div></div>
     <div class="detail-field"><div class="detail-label">Current Stock</div><div class="detail-value">{{ net_stock }}</div></div>

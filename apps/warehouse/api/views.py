@@ -3,7 +3,11 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import Product, StockMovement
+from django.db.models import Sum, Count, Q, Subquery, OuterRef, IntegerField
+from django.utils import timezone
+from datetime import timedelta
+
+from ..models import Product, StockMovement, Category
 from ..services import (
     receive_purchase_order,
     fulfill_sales_order,
@@ -20,6 +24,9 @@ from .serializers import (
     ReconcileSerializer,
     MovementSerializer,
 )
+from apps.crm.models import Customer as CRMCustomer
+from apps.finance.models import Invoice
+from apps.backorder.models import BackOrder
 from lib.throttling import StockMutationThrottle
 
 logger = logging.getLogger(__name__)
@@ -40,6 +47,9 @@ class ProductListCreateView(generics.ListCreateAPIView):
         if search:
             qs = qs.filter(name__icontains=search) | qs.filter(sku__icontains=search)
         return qs
+
+    def perform_create(self, serializer):
+        serializer.save(tenant=self.request.user.tenant)
 
 
 class ProductDetailView(generics.RetrieveUpdateAPIView):
@@ -163,3 +173,109 @@ class MovementListView(generics.ListAPIView):
         if movement_type:
             qs = qs.filter(type=movement_type)
         return qs[:100]
+
+
+class DashboardStatsView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tenant = request.user.tenant
+        now = timezone.now()
+
+        stock_subquery = Subquery(
+            StockMovement.objects.filter(
+                product_id=OuterRef("pk"), tenant=tenant
+            ).values("product_id").annotate(total=Sum("qty")).values("total")[:1],
+            output_field=IntegerField(),
+        )
+
+        products_qs = Product.objects.filter(tenant=tenant, is_active=True).annotate(
+            stock=stock_subquery
+        )
+
+        stock_by_category = (
+            Product.objects.filter(tenant=tenant, is_active=True)
+            .values("category__name")
+            .annotate(value=Sum("cost_price"))
+            .order_by("-value")
+        )
+
+        categories = []
+        cat_others = 0
+        for i, cat in enumerate(stock_by_category):
+            v = float(cat["value"] or 0)
+            if i < 6:
+                categories.append({"category": cat["category__name"] or "Uncategorized", "value": v})
+            else:
+                cat_others += v
+        if cat_others > 0:
+            categories.append({"category": "Others", "value": cat_others})
+
+        movements_all = StockMovement.objects.filter(tenant=tenant)
+
+        months = []
+        for i in range(11, -1, -1):
+            first = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=30 * i)
+            last = (first + timedelta(days=32)).replace(day=1)
+            mvs = movements_all.filter(created_at__gte=first, created_at__lt=last)
+            months.append({
+                "month": first.strftime("%Y-%m"),
+                "inbound": mvs.filter(type="inbound").aggregate(s=Sum("qty"))["s"] or 0,
+                "outbound": abs(mvs.filter(type="outbound").aggregate(s=Sum("qty"))["s"] or 0),
+                "adjustment": mvs.filter(type="adjustment").aggregate(c=Count("id"))["c"] or 0,
+            })
+
+        invoices = Invoice.objects.filter(tenant=tenant)
+        revenue_by_month = []
+        for i in range(11, -1, -1):
+            first = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=30 * i)
+            last = (first + timedelta(days=32)).replace(day=1)
+            total = invoices.filter(created_at__gte=first, created_at__lt=last).aggregate(s=Sum("total"))["s"] or 0
+            revenue_by_month.append({
+                "month": first.strftime("%Y-%m"),
+                "revenue": float(total),
+            })
+
+        products_with_stock = list(products_qs)
+        low_stock_products = [p for p in products_with_stock if (p.stock or 0) <= 5]
+        low_stock_list = [
+            {"id": p.id, "sku": p.sku, "name": p.name, "stock": p.stock or 0}
+            for p in sorted(low_stock_products, key=lambda p: p.stock or 0)[:10]
+        ]
+
+        stock_value = sum(float(p.cost_price or 0) * (p.stock or 0) for p in products_with_stock)
+
+        recent = movements_all.select_related("product", "created_by").order_by("-created_at")[:5]
+        recent_list = [
+            {
+                "id": m.id,
+                "type": m.type,
+                "qty": m.qty,
+                "reference": m.reference,
+                "product_sku": m.product.sku,
+                "product_id": m.product_id,
+                "created_by_username": m.created_by.username,
+                "created_at": m.created_at,
+            }
+            for m in recent
+        ]
+
+        return Response({
+            "stats": {
+                "total_products": len(products_with_stock),
+                "total_products_all": Product.objects.filter(tenant=tenant).count(),
+                "total_customers": CRMCustomer.objects.filter(tenant=tenant).count(),
+                "total_invoices": invoices.count(),
+                "total_revenue": float(invoices.aggregate(s=Sum("total"))["s"] or 0),
+                "open_backorders": BackOrder.objects.filter(
+                    tenant=tenant, status__in=["open", "partially_fulfilled"]
+                ).count(),
+                "stock_value": stock_value,
+                "low_stock_count": len(low_stock_products),
+            },
+            "stock_by_category": categories,
+            "movements_by_month": months,
+            "revenue_by_month": revenue_by_month,
+            "low_stock_products": low_stock_list,
+            "recent_movements": recent_list,
+        })

@@ -10,4 +10,5 @@ urlpatterns = [
     path("stock/<int:product_id>/", views.StockCheckView.as_view(), name="stock-check"),
     path("reconcile/", views.ReconcileView.as_view(), name="reconcile"),
     path("movements/", views.MovementListView.as_view(), name="movement-list"),
+    path("dashboard/", views.DashboardStatsView.as_view(), name="dashboard-stats"),
 ]

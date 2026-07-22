@@ -3,9 +3,10 @@ from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
 
-auth_index = lambda _: JsonResponse({
-    "auth": "register, login, profile, token, token/refresh",
-})
+def auth_index(_):
+    return JsonResponse({
+        "auth": "register, login, profile, token, token/refresh",
+    })
 
 urlpatterns = [
     path("", auth_index, name="auth-index"),

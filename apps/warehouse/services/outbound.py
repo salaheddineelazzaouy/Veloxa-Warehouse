@@ -45,6 +45,7 @@ def fulfill_sales_order(
             note=note,
             location_id=location_id,
             created_by=user,
+            tenant=user.tenant,
         )
 
         stock_after = current_stock(product_id)

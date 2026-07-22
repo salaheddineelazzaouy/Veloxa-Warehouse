@@ -1,0 +1,304 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Veloxa Warehouse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0e0f13; --bg2: #15171c; --card: #1a1c23; --card-h: #1f2129;
+      --border: #2a2d36; --border-lt: #363944; --text: #e8e8ed;
+      --text2: #8b8d97; --text3: #5c5e68; --accent: #7a5fff;
+      --accent-h: #6b50e8; --accent-g: rgba(122,95,255,.15);
+      --green: #2ed573; --red: #ff4757; --amber: #ffa502;
+      --radius: 12px; --radius-sm: 8px;
+    }
+    body {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      font-size: 14px; line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    .page-wrap { max-width: 600px; margin: 0 auto; padding: 40px 20px 60px; }
+
+    /* Header */
+    .signup-header { text-align: center; margin-bottom: 32px; }
+    .brand-icon {
+      width: 48px; height: 48px; background: var(--accent); border-radius: 12px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 22px; color: #fff; margin-bottom: 12px;
+    }
+    .signup-header h1 { font-size: 22px; font-weight: 800; letter-spacing: -.3px; }
+    .signup-header p { color: var(--text2); font-size: 14px; margin-top: 4px; }
+
+    /* Card */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; margin-bottom: 20px;
+    }
+    .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .card h2 i { color: var(--accent); font-size: 16px; }
+
+    /* Form fields */
+    .fg { margin-bottom: 16px; }
+    .fg label {
+      display: block; font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .3px; color: var(--text2); margin-bottom: 5px;
+    }
+    .fg input {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;
+      background: var(--bg2); color: var(--text); outline: none;
+      transition: border-color .15s;
+    }
+    .fg input:focus { border-color: var(--accent); }
+
+    /* Plan cards */
+    .plans-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .plan-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); cursor: pointer;
+      transition: all .15s; background: var(--bg2);
+    }
+    .plan-card:hover { border-color: var(--text3); }
+    .plan-card.selected {
+      border-color: var(--accent); background: var(--accent-g);
+    }
+    .plan-card .radio {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid var(--text3); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .plan-card.selected .radio { border-color: var(--accent); }
+    .plan-card.selected .radio::after {
+      content: ''; width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+    }
+    .plan-card .plan-info { flex: 1; min-width: 0; }
+    .plan-card .plan-name { font-weight: 700; font-size: 14px; }
+    .plan-card .plan-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .plan-card .plan-price { font-weight: 700; font-size: 15px; color: var(--accent); white-space: nowrap; }
+    .plan-card .plan-features {
+      font-size: 12px; color: var(--text3); margin-top: 4px;
+      display: flex; flex-wrap: wrap; gap: 4px;
+    }
+    .plan-card .plan-features span {
+      background: var(--card); padding: 1px 8px; border-radius: 10px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px; width: 100%; padding: 12px; border: none;
+      border-radius: var(--radius-sm); font-size: 15px; font-weight: 600;
+      font-family: inherit; cursor: pointer; transition: all .15s;
+    }
+    .btn-p { background: var(--accent); color: #fff; }
+    .btn-p:hover { background: var(--accent-h); }
+    .btn-p:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-o {
+      background: transparent; color: var(--text2);
+      border: 1.5px solid var(--border);
+    }
+    .btn-o:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Messages */
+    .msg {
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      font-size: 13px; margin-bottom: 16px; display: none;
+    }
+    .msg-e { display: block; background: rgba(255,71,87,.1); border: 1px solid rgba(255,71,87,.2); color: var(--red); }
+    .msg-s { display: block; background: rgba(46,213,115,.1); border: 1px solid rgba(46,213,115,.2); color: var(--green); }
+
+    .footer-links { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text3); }
+    .footer-links a { color: var(--accent); text-decoration: none; }
+    .footer-links a:hover { text-decoration: underline; }
+
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-plans { text-align: center; padding: 20px; color: var(--text3); }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <div class="signup-header">
+      <div class="brand-icon">V</div>
+      <h1>Create your account</h1>
+      <p>Choose a plan and get started with Veloxa Warehouse</p>
+    </div>
+
+    <div id="errorMsg" class="msg"></div>
+    <div id="successMsg" class="msg msg-s"></div>
+
+    <form id="signupForm">
+      {% csrf_token %}
+      <div class="card">
+        <h2><i class="fas fa-user"></i> Account details</h2>
+        <div class="fg">
+          <label>Username</label>
+          <input type="text" name="username" id="fieldUsername" required autocomplete="username" placeholder="Choose a username">
+        </div>
+        <div class="fg">
+          <label>Email</label>
+          <input type="email" name="email" id="fieldEmail" required autocomplete="email" placeholder="you@company.ma">
+        </div>
+        <div class="fg">
+          <label>Password</label>
+          <input type="password" name="password" id="fieldPassword" required minlength="8" autocomplete="new-password" placeholder="Min. 8 characters">
+        </div>
+        <div class="fg">
+          <label>Confirm password</label>
+          <input type="password" id="fieldPassword2" required minlength="8" autocomplete="new-password" placeholder="Re-enter password">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><i class="fas fa-crown"></i> Select a plan</h2>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Pick the plan that fits your needs. You can upgrade later.</p>
+        <div id="plansContainer" class="plans-grid">
+          <div class="loading-plans"><i class="fas fa-spinner fa-spin"></i> Loading plans...</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-p" id="submitBtn">
+        <span id="submitText">Create account</span>
+        <span class="spinner hide" id="submitSpin"></span>
+      </button>
+    </form>
+
+    <div class="footer-links">
+      Already have an account? <a href="/login/">Sign in</a>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/api'
+    let selectedPlanId = null
+    let plans = []
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg')
+      el.textContent = msg
+      el.className = 'msg msg-e'
+    }
+
+    function hideError() {
+      document.getElementById('errorMsg').className = 'msg'
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('successMsg')
+      el.textContent = msg
+      el.className = 'msg msg-s'
+    }
+
+    // Fetch plans
+    async function loadPlans() {
+      try {
+        const res = await fetch(API_BASE + '/subscriptions/public-plans/')
+        plans = await res.json()
+        renderPlans()
+      } catch(e) {
+        document.getElementById('plansContainer').innerHTML =
+          '<div class="loading-plans" style="color:var(--red)">Failed to load plans.</div>'
+      }
+    }
+
+    function renderPlans() {
+      const c = document.getElementById('plansContainer')
+      if (!plans.length) {
+        c.innerHTML = '<div class="loading-plans">No plans available.</div>'
+        return
+      }
+      c.innerHTML = plans.map(p => {
+        const features = p.features ? Object.entries(p.features).map(([k, v]) => {
+          const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+          const val = typeof v === 'boolean' ? (v ? 'Yes' : '—') : v
+          return `${label}: ${val}`
+        }) : []
+        return `<div class="plan-card" data-plan-id="${p.id}" onclick="selectPlan(${p.id})">
+          <div class="radio"></div>
+          <div class="plan-info">
+            <div class="plan-name">${p.name}</div>
+            ${p.description ? '<div class="plan-desc">' + p.description + '</div>' : ''}
+            ${features.length ? '<div class="plan-features">' + features.slice(0, 3).map(f => '<span>' + f + '</span>').join('') + '</div>' : ''}
+          </div>
+          <div class="plan-price">${p.price_display}</div>
+        </div>`
+      }).join('')
+    }
+
+    function selectPlan(id) {
+      selectedPlanId = id
+      document.querySelectorAll('.plan-card').forEach(el => {
+        el.classList.toggle('selected', parseInt(el.dataset.planId) === id)
+      })
+    }
+
+    // Submit
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+      e.preventDefault()
+      hideError()
+
+      const username = document.getElementById('fieldUsername').value.trim()
+      const email = document.getElementById('fieldEmail').value.trim()
+      const password = document.getElementById('fieldPassword').value
+      const password2 = document.getElementById('fieldPassword2').value
+
+      if (!username || !email || !password) { showError('Please fill in all fields.'); return }
+      if (password !== password2) { showError('Passwords do not match.'); return }
+      if (password.length < 8) { showError('Password must be at least 8 characters.'); return }
+
+      const btn = document.getElementById('submitBtn')
+      const txt = document.getElementById('submitText')
+      const spin = document.getElementById('submitSpin')
+      btn.disabled = true; txt.textContent = 'Creating account...'; spin.classList.remove('hide')
+
+      try {
+        const body = { username, email, password }
+        if (selectedPlanId) body.plan_id = selectedPlanId
+
+        const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''
+        const res = await fetch(API_BASE + '/auth/register/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify(body)
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          const errMsg = data.detail || data.email?.[0] || data.username?.[0] || data.password?.[0] || data.error || 'Registration failed.'
+          showError(errMsg)
+          btn.disabled = false; txt.textContent = 'Create account'; spin.classList.add('hide')
+          return
+        }
+
+        showSuccess('Account created successfully')
+        txt.textContent = 'Redirecting...'
+
+        // Register already returns JWT tokens — store and redirect to SPA
+        localStorage.setItem('veloxa_access', data.access)
+        localStorage.setItem('veloxa_refresh', data.refresh)
+        localStorage.setItem('veloxa_user', JSON.stringify(data.user || { username }))
+        window.location.href = '/app/'
+      } catch(e) {
+        showError('Network error. Please try again.')
+        btn.disabled = false; txt.textContent = 'Create account'; spin.classList.add('hide')
+      }
+    })
+
+    loadPlans()
+  </script>
+</body>
+</html>

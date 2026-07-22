@@ -11,7 +11,6 @@ from apps.warehouse.services import (
     adjustment,
     reconcile,
 )
-from apps.warehouse.models import StockMovement
 from lib.exceptions import InsufficientStock, DuplicateReference, InvalidMovement
 
 

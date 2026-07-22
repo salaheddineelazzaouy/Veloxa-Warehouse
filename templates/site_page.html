@@ -1,8 +1,205 @@
-{% extends "base.html" %}
-{% block title %}{{ page.title }}{% endblock %}
-{% block page_title %}{{ page.title }}{% endblock %}
-{% block content %}
-<div class="card">
-  <div class="card-body rich-content">{{ page.content|safe }}</div>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }} — Veloxa Warehouse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    @media (min-width: 768px) { .container { padding: 0 40px; } }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    nav .container {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 18px; font-weight: 800; color: #0f172a;
+      text-decoration: none;
+    }
+    .nav-logo i { color: #2563eb; font-size: 20px; }
+    .nav-links { display: none; gap: 28px; list-style: none; }
+    .nav-links a {
+      text-decoration: none; font-size: 14px; font-weight: 500;
+      color: #475569; transition: color .2s;
+    }
+    .nav-links a:hover, .nav-links a:focus-visible { color: #2563eb; outline: none; }
+    .nav-actions { display: flex; gap: 10px; }
+    .nav-toggle {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border: none; background: none;
+      color: #0f172a; font-size: 20px; cursor: pointer; border-radius: 8px;
+    }
+    .nav-toggle:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+    @media (min-width: 768px) { .nav-links { display: flex; } .nav-toggle { display: none; } }
+    .mobile-menu {
+      display: none; flex-direction: column; gap: 6px;
+      padding: 12px 24px 20px; border-top: 1px solid #e2e8f0;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { padding: 8px 0; font-size: 14px; font-weight: 500; color: #475569; text-decoration: none; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 10px;
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      cursor: pointer; text-decoration: none; border: none;
+      transition: all .2s;
+    }
+    .btn:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+    .btn-primary { background: #2563eb; color: #fff; box-shadow: 0 2px 12px rgba(37,99,235,.25); }
+    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(37,99,235,.3); }
+    .btn-outline { background: transparent; color: #475569; border: 1.5px solid #cbd5e1; }
+    .btn-outline:hover { border-color: #2563eb; color: #2563eb; }
+
+    .page-header {
+      padding: 48px 0 32px;
+      background: linear-gradient(160deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);
+    }
+    .page-header h1 { font-size: 32px; font-weight: 800; letter-spacing: -.5px; }
+    @media (min-width: 768px) { .page-header h1 { font-size: 40px; } }
+
+    .content-section { padding: 48px 0 64px; }
+    .content-card {
+      background: #fff; border: 1px solid #e2e8f0;
+      border-radius: 16px; padding: 40px;
+      max-width: 800px; margin: 0 auto;
+    }
+    .content-card h2 { font-size: 22px; font-weight: 700; margin: 24px 0 12px; }
+    .content-card h2:first-child { margin-top: 0; }
+    .content-card h3 { font-size: 17px; font-weight: 700; margin: 20px 0 8px; }
+    .content-card p { font-size: 15px; color: #475569; line-height: 1.8; margin-bottom: 12px; }
+    .content-card ul { list-style: none; margin-bottom: 12px; }
+    .content-card ul li { font-size: 15px; color: #475569; padding: 4px 0; padding-left: 24px; position: relative; }
+    .content-card ul li::before { content: "•"; color: #2563eb; font-weight: 700; position: absolute; left: 8px; }
+    .content-card code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 13px; color: #2563eb; }
+
+    footer {
+      background: #0f172a; padding: 40px 0 28px;
+      border-top: 1px solid #1e293b;
+    }
+    footer .container { display: flex; flex-direction: column; gap: 24px; }
+    @media (min-width: 768px) { footer .container { flex-direction: row; justify-content: space-between; align-items: flex-start; } }
+    footer .col-brand .logo { color: #fff; }
+    footer .col-brand p { font-size: 13px; color: #64748b; max-width: 280px; margin-top: 6px; }
+    footer .col-links { display: flex; gap: 32px; flex-wrap: wrap; }
+    footer .col-links h5 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; margin-bottom: 12px; }
+    footer .col-links ul { list-style: none; }
+    footer .col-links ul li { margin-bottom: 8px; }
+    footer .col-links a { font-size: 14px; color: #475569; text-decoration: none; transition: color .2s; }
+    footer .col-links a:hover { color: #2563eb; }
+    .footer-social { display: flex; gap: 10px; }
+    .footer-social a {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: rgba(255,255,255,.04);
+      display: flex; align-items: center; justify-content: center;
+      color: #64748b; text-decoration: none; font-size: 14px; transition: all .2s;
+    }
+    .footer-social a:hover { background: rgba(37,99,235,.15); color: #2563eb; }
+    .footer-bottom {
+      max-width: 1120px; margin: 24px auto 0; padding: 16px 24px 0;
+      border-top: 1px solid #1e293b;
+      display: flex; justify-content: space-between; flex-wrap: wrap;
+      font-size: 13px; color: #475569;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a href="/" class="nav-logo"><i class="fas fa-warehouse"></i> Veloxa Warehouse</a>
+    <ul class="nav-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/#security">Security</a></li>
+      <li><a href="/#compliance">Compliance</a></li>
+      <li><a href="/#pricing">Pricing</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="/login/" class="btn btn-outline">Sign In</a>
+      <a href="/contact/" class="btn btn-primary">Request Demo</a>
+    </div>
+    <button class="nav-toggle" aria-label="Toggle menu" onclick="document.getElementById('mobile-menu').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="/#features" onclick="this.closest('.mobile-menu').classList.remove('open')">Features</a>
+    <a href="/#security" onclick="this.closest('.mobile-menu').classList.remove('open')">Security</a>
+    <a href="/#compliance" onclick="this.closest('.mobile-menu').classList.remove('open')">Compliance</a>
+    <a href="/#pricing" onclick="this.closest('.mobile-menu').classList.remove('open')">Pricing</a>
+    <a href="/contact/" onclick="this.closest('.mobile-menu').classList.remove('open')">Contact</a>
+    <a href="/login/" onclick="this.closest('.mobile-menu').classList.remove('open')" style="margin-top:6px">Sign In</a>
+  </div>
+</nav>
+
+<section class="page-header">
+  <div class="container">
+    <h1>{{ page.title }}</h1>
+  </div>
+</section>
+
+<section class="content-section">
+  <div class="container">
+    <div class="content-card">{{ page.content|safe }}</div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="col-brand">
+      <span class="logo" style="font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px"><i class="fas fa-warehouse" style="color:#2563eb"></i> Veloxa Warehouse</span>
+      <p>Immutable inventory system built for Moroccan compliance (CNDP/PCM). Modular monolith — Django 5.1 + PostgreSQL 16 + Redis 7.</p>
+    </div>
+    <div class="col-links">
+      <div>
+        <h5>Product</h5>
+        <ul>
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li><a href="/about/">Architecture</a></li>
+          <li><a href="/legal/">Security whitepaper</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Company</h5>
+        <ul>
+          <li><a href="/about/">About</a></li>
+          <li><a href="/contact/">Contact</a></li>
+          <li><a href="/about/">Careers</a></li>
+          <li><a href="/legal/">Legal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-social">
+      <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+      <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Veloxa. All rights reserved.</span>
+    <span>app.veloxa.ma — Warehouse Inventory System. Immutable ledger since 2026.</span>
+  </div>
+</footer>
+
+</body>
+</html>

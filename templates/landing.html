@@ -335,8 +335,8 @@
       <li><a href="/contact/">Contact</a></li>
     </ul>
     <div class="nav-actions">
+      <a href="/signup/" class="btn btn-primary">Get Started</a>
       <a href="/login/" class="btn btn-outline">Sign In</a>
-      <a href="/contact/" class="btn btn-primary">Request Demo</a>
     </div>
     <button class="nav-toggle" aria-label="Toggle menu" onclick="document.getElementById('mobile-menu').classList.toggle('open')"><i class="fas fa-bars"></i></button>
   </div>
@@ -346,7 +346,7 @@
     <a href="#compliance" onclick="this.closest('.mobile-menu').classList.remove('open')">Compliance</a>
     <a href="#pricing" onclick="this.closest('.mobile-menu').classList.remove('open')">Pricing</a>
     <a href="/contact/" onclick="this.closest('.mobile-menu').classList.remove('open')">Contact</a>
-    <a href="/login/" onclick="this.closest('.mobile-menu').classList.remove('open')" style="margin-top:6px">Sign In</a>
+    <a href="/signup/" onclick="this.closest('.mobile-menu').classList.remove('open')" style="margin-top:6px">Get Started</a>
   </div>
 </nav>
 
@@ -360,7 +360,7 @@
         {% if hero.cta_link and hero.cta_link != "#" %}
         <a href="{{ hero.cta_link }}" class="btn btn-primary btn-lg">{{ hero.cta_text|default:"Start free trial" }}</a>
         {% else %}
-        <a href="/contact/" class="btn btn-primary btn-lg">{{ hero.cta_text|default:"Start free trial" }}</a>
+        <a href="/signup/" class="btn btn-primary btn-lg">{{ hero.cta_text|default:"Start free trial" }}</a>
         {% endif %}
         {% if hero.secondary_cta_link %}
         <a href="{{ hero.secondary_cta_link }}" class="btn btn-outline btn-lg"><i class="fas fa-file-alt"></i> {{ hero.secondary_cta_text|default:"Read the architecture" }}</a>
@@ -505,7 +505,7 @@
           <li><i class="fas fa-check"></i> {{ feature }}</li>
           {% endfor %}
         </ul>
-        <a href="/contact/" class="btn {{ p.button_class|default:'btn-outline' }}">{{ p.button_text|default:"Request demo" }}</a>
+        <a href="/signup/" class="btn {{ p.button_class|default:'btn-outline' }}">{{ p.button_text|default:"Get Started" }}</a>
       </div>
       {% empty %}
       <div class="price-card">
@@ -518,7 +518,7 @@
           <li><i class="fas fa-check"></i> Email support (24h)</li>
           <li><i class="fas fa-check"></i> JWT authentication</li>
         </ul>
-        <a href="/contact/" class="btn btn-outline">Request demo</a>
+        <a href="/signup/" class="btn btn-outline">Get Started</a>
       </div>
       <div class="price-card popular">
         <span class="badge">Most popular</span>
@@ -531,7 +531,7 @@
           <li><i class="fas fa-check"></i> Full audit trail + PII redaction</li>
           <li><i class="fas fa-check"></i> Priority support (2h SLA)</li>
         </ul>
-        <a href="/contact/" class="btn btn-primary">Request demo</a>
+        <a href="/signup/" class="btn btn-primary">Get Started</a>
       </div>
       <div class="price-card">
         <div class="plan">Enterprise</div>

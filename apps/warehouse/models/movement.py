@@ -1,10 +1,11 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from apps.tenants.managers import TenantAwareManager
 
 
 class StockMovement(models.Model):
     """THE immutable ledger — every stock change is one row.
-    
+
     - `qty` is signed: positive = inbound, negative = outbound
     - Once created, entries CANNOT be updated or deleted.
     - Corrections are made via new adjustment entries.
@@ -34,6 +35,12 @@ class StockMovement(models.Model):
         on_delete=models.PROTECT,
     )
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    tenant = models.ForeignKey(
+        "tenants.Tenant", on_delete=models.CASCADE,
+        null=True, blank=True, related_name="%(class)s_set",
+    )
+
+    objects = TenantAwareManager()
 
     class Meta:
         db_table = "warehouse_stockmovement"

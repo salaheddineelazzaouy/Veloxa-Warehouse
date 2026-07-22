@@ -1,4 +1,5 @@
 from django.db import models
+from ckeditor.fields import RichTextField
 
 
 class HeroSection(models.Model):
@@ -129,7 +130,7 @@ class LandingLead(models.Model):
 class SitePage(models.Model):
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=255)
-    content = models.TextField(help_text="HTML content")
+    content = RichTextField(config_name="default", help_text="Page content with rich text editor")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

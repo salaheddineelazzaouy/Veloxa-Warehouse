@@ -12,14 +12,20 @@ def create_backorder(product_id: int, missing_qty: int, so_ref: str, user) -> Ba
         qty=missing_qty,
         sales_order_ref=so_ref,
         created_by=user,
+        tenant=user.tenant,
     )
     logger.info("BackOrder created product=%d qty=%d ref=%s", product_id, missing_qty, so_ref)
     return backorder
 
 
 def fulfill_backorder(backorder_id: int, qty: int, user) -> BackOrder:
+    from apps.tenants.utils import get_current_tenant_id
     with transaction.atomic():
-        bo = BackOrder.objects.select_for_update().get(pk=backorder_id, status__in=["open", "partially_fulfilled"])
+        qs = BackOrder.objects.select_for_update().filter(pk=backorder_id, status__in=["open", "partially_fulfilled"])
+        tenant_id = get_current_tenant_id()
+        if tenant_id is not None:
+            qs = qs.filter(tenant_id=tenant_id)
+        bo = qs.get()
         new_fulfilled = bo.qty_fulfilled + qty
         if new_fulfilled > bo.qty:
             raise ValueError(f"Fulfillment {qty} exceeds remaining {bo.qty_remaining}")

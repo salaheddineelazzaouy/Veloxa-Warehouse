@@ -22,11 +22,14 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
         logger.info("Registered user %s", user.username)
+        from apps.subscriptions.serializers import SubscriptionSerializer
+        sub = user.subscriptions.order_by("-created_at").first()
         return Response(
             {
                 "user": UserSerializer(user).data,
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                "subscription": SubscriptionSerializer(sub).data if sub else None,
             },
             status=status.HTTP_201_CREATED,
         )

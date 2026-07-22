@@ -24,7 +24,11 @@ INSTALLED_APPS = [
     "apps.finance",
     "apps.audit",
     "apps.crm",
+    "apps.tenants",
     "apps.landing",
+    "apps.subscriptions",
+    "django_extensions",
+    "ckeditor",
 ]
 
 MIDDLEWARE = [
@@ -37,6 +41,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.audit.middleware.AuditMiddleware",
+    "apps.tenants.middleware.TenantMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -84,7 +89,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR.parent / "frontend" / "dist"]
+
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 LOGIN_URL = "/login/"
 
@@ -101,6 +109,8 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
     ),
+    "DEFAULT_PAGINATION_CLASS": "lib.pagination.AllowAllPagination",
+    "PAGE_SIZE": 20,
     "EXCEPTION_HANDLER": "lib.exceptions.custom_exception_handler",
     "DEFAULT_THROTTLE_CLASSES": (
         "rest_framework.throttling.AnonRateThrottle",
@@ -119,6 +129,36 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "ALGORITHM": "HS256",
+}
+
+# --- CKEditor ---
+CKEDITOR_CONFIGS = {
+    "default": {
+        "toolbar": "full",
+        "height": 400,
+        "width": "100%",
+        "extraPlugins": ",".join(["codesnippet", "uploadimage", "div", "autolink", "autoembed", "embedsemantic", "autogrow", "widget", "lineutils", "clipboard", "dialog", "dialogui", "elementspath"]),
+        "allowedContent": True,
+        "contentsCss": ["https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"],
+        "bodyClass": "ckeditor-content",
+        "bodyId": "ckeditor-body",
+        "format_tags": "p;h1;h2;h3;h4;pre;div",
+        "removeButtons": "Save,NewPage,Preview,Print,Templates",
+        "toolbarGroups": [
+            {"name": "document", "groups": ["mode", "document", "doctools"]},
+            {"name": "clipboard", "groups": ["clipboard", "undo"]},
+            {"name": "editing", "groups": ["find", "selection", "spellchecker"]},
+            {"name": "forms"},
+            {"name": "basicstyles", "groups": ["basicstyles", "cleanup"]},
+            {"name": "paragraph", "groups": ["list", "indent", "blocks", "align", "bidi"]},
+            {"name": "links"},
+            {"name": "insert"},
+            {"name": "styles"},
+            {"name": "colors"},
+            {"name": "tools"},
+            {"name": "others"},
+        ],
+    }
 }
 
 # --- CORS ---
@@ -164,8 +204,7 @@ LOGGING = {
 }
 
 # --- Encryption (for django-encrypted-model-fields) ---
-import os as _os
-if not _os.environ.get("FIELD_ENCRYPTION_KEY"):
+if not os.environ.get("FIELD_ENCRYPTION_KEY"):
     from cryptography.fernet import Fernet
-    _os.environ["FIELD_ENCRYPTION_KEY"] = Fernet.generate_key().decode()
-FIELD_ENCRYPTION_KEY = _os.environ["FIELD_ENCRYPTION_KEY"]
+    os.environ["FIELD_ENCRYPTION_KEY"] = Fernet.generate_key().decode()
+FIELD_ENCRYPTION_KEY = os.environ["FIELD_ENCRYPTION_KEY"]
