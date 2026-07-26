@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% block title %}BC {{ po.ref }}{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="margin: 0;">BON DE COMMANDE</h1>
+    <div>
+      {% if po.status == 'draft' %}
+      <span class="badge badge-muted">Brouillon</span>
+      {% elif po.status == 'confirmed' %}
+      <span class="badge badge-success">Confirmé</span>
+      {% elif po.status == 'in_progress' %}
+      <span class="badge badge-warning">En cours</span>
+      {% elif po.status == 'delivered' %}
+      <span class="badge badge-success">Livré</span>
+      {% elif po.status == 'cancelled' %}
+      <span class="badge badge-danger">Annulé</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="detail-label">Référence</div>
+        <div class="detail-value">{{ po.ref }}</div>
+      </div>
+      {% if po.customer_po_ref %}
+      <div class="detail-field">
+        <div class="detail-label">Réf. Client</div>
+        <div class="detail-value">{{ po.customer_po_ref }}</div>
+      </div>
+      {% endif %}
+      <div class="detail-field">
+        <div class="detail-label">Date</div>
+        <div class="detail-value">{{ po.date|date:"d/m/Y" }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Conditions de paiement</div>
+        <div class="detail-value">{{ po.get_payment_terms_display }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Statut</div>
+        <div class="detail-value">{{ po.get_status_display }}</div>
+      </div>
+      {% if po.quote %}
+      <div class="detail-field">
+        <div class="detail-label">Devis lié</div>
+        <div class="detail-value"><a href="{% url 'quote-detail' po.quote.id %}">{{ po.quote.ref }}</a></div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+  <div class="card">
+    <div class="card-header">Émetteur</div>
+    <div class="card-body">
+      <p><strong>{{ tenant.legal_name|default:tenant.name }}</strong></p>
+      <p>{{ tenant.address }}</p>
+      {% if tenant.ice %}<p>ICE : {{ tenant.ice }}</p>{% endif %}
+      {% if tenant.identifiant_fiscal %}<p>Identifiant fiscal : {{ tenant.identifiant_fiscal }}</p>{% endif %}
+      {% if tenant.registre_commerce %}<p>Registre du commerce : {{ tenant.registre_commerce }}</p>{% endif %}
+      {% if tenant.taxe_professionnelle %}<p>Taxe professionnelle : {{ tenant.taxe_professionnelle }}</p>{% endif %}
+      {% if tenant.capital_social %}<p>Capital social : {{ tenant.capital_social }}</p>{% endif %}
+      {% if tenant.bank_name %}<p>Banque : {{ tenant.bank_name }}</p>{% endif %}
+      {% if tenant.rib %}<p>RIB : {{ tenant.rib }}</p>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">Client</div>
+    <div class="card-body">
+      <p><strong>{{ po.customer.name }}</strong></p>
+      <p>{{ po.customer.address }}</p>
+      {% if po.customer.ice %}<p>ICE : {{ po.customer.ice }}</p>{% endif %}
+      {% if po.customer.identifiant_fiscal %}<p>Identifiant fiscal : {{ po.customer.identifiant_fiscal }}</p>{% endif %}
+      {% if po.customer.registre_commerce %}<p>Registre du commerce : {{ po.customer.registre_commerce }}</p>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header">Détail des lignes</div>
+  <div class="card-body" style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+          <th style="padding: 0.5rem;">#</th>
+          <th style="padding: 0.5rem;">Description</th>
+          <th style="padding: 0.5rem; text-align: right;">Qté</th>
+          <th style="padding: 0.5rem; text-align: right;">Prix Unit. HT</th>
+          <th style="padding: 0.5rem; text-align: right;">TVA %</th>
+          <th style="padding: 0.5rem; text-align: right;">Total HT</th>
+          <th style="padding: 0.5rem; text-align: right;">Total TTC</th>
+          {% if delivered_map %}<th style="padding: 0.5rem; text-align: right;">Livré</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in lines %}
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 0.5rem;">{{ forloop.counter }}</td>
+          <td style="padding: 0.5rem;">{{ line.product.sku }} — {{ line.product.name }}{% if line.description %}<br><small>{{ line.description }}</small>{% endif %}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.qty }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.unit_price }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.vat_rate }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.total_ht }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.total_ttc }}</td>
+          {% if delivered_map %}
+          <td style="padding: 0.5rem; text-align: right;">
+            {% with pid_str=line.product_id|slugify %}
+              {% for key, qty in delivered_map.items %}
+                {% if key == pid_str %}{{ qty }}{% endif %}
+              {% endfor %}
+            {% endwith %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="border-top: 2px solid var(--border); font-weight: bold;">
+          <td colspan="5" style="padding: 0.5rem;"></td>
+          <td style="padding: 0.5rem; text-align: right;">Total HT</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ po.total_ht }}</td>
+        </tr>
+        <tr style="border-top: 1px solid var(--border);">
+          <td colspan="5" style="padding: 0.5rem;"></td>
+          <td style="padding: 0.5rem; text-align: right;">TVA</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ po.total_vat }}</td>
+        </tr>
+        <tr style="border-top: 2px solid var(--border); font-weight: bold; font-size: 1.1em;">
+          <td colspan="5" style="padding: 0.5rem;"></td>
+          <td style="padding: 0.5rem; text-align: right;">Total TTC</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ po.total_ttc }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+{% if delivery_notes %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header">BL liés ({{ delivery_notes|length }})</div>
+  <div class="card-body">
+    <table class="table">
+      <thead><tr>
+        <th>Réf</th>
+        <th>Date</th>
+        <th>Statut</th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for bl in delivery_notes %}
+        <tr>
+          <td><code>{{ bl.ref }}</code></td>
+          <td>{{ bl.delivery_date|date:"d/m/Y"|default:"—" }}</td>
+          <td>
+            {% if bl.status == "draft" %}<span class="badge badge-muted">Brouillon</span>
+            {% elif bl.status == "delivered" %}<span class="badge badge-success">Livré</span>
+            {% elif bl.status == "partial" %}<span class="badge badge-warning">Partiel</span>
+            {% endif %}
+          </td>
+          <td><a href="{% url 'bl-detail' bl.id %}" class="btn btn-sm">Voir</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+  <button onclick="window.print();" class="btn btn-outline">Imprimer</button>
+  <a href="{% url 'po-edit' po.id %}" class="btn btn-primary">Modifier</a>
+  <a href="{% url 'po-list' %}" class="btn btn-outline">Retour</a>
+
+  {% if po.status == 'draft' %}
+  <form method="post" action="{% url 'po-status-update' po.id %}" style="display: inline;">
+    {% csrf_token %}
+    <input type="hidden" name="status" value="confirmed">
+    <button type="submit" class="btn btn-success">Confirmer</button>
+  </form>
+  {% endif %}
+
+  {% if po.status == 'confirmed' %}
+  <form method="post" action="{% url 'po-status-update' po.id %}" style="display: inline;">
+    {% csrf_token %}
+    <input type="hidden" name="status" value="in_progress">
+    <button type="submit" class="btn btn-success">Marquer En cours</button>
+  </form>
+  {% endif %}
+
+  {% if po.status == 'confirmed' or po.status == 'in_progress' %}
+  <form method="post" action="{% url 'po-convert-to-bl' po.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-success" style="font-weight:600;">Créer Bon de Livraison</button>
+  </form>
+  {% endif %}
+
+  {% if po.status == 'in_progress' %}
+  <form method="post" action="{% url 'po-status-update' po.id %}" style="display: inline;">
+    {% csrf_token %}
+    <input type="hidden" name="status" value="delivered">
+    <button type="submit" class="btn btn-success">Marquer Livré</button>
+  </form>
+  {% endif %}
+
+  {% if po.status != 'cancelled' and po.status != 'delivered' %}
+  <form method="post" action="{% url 'po-status-update' po.id %}" style="display: inline;">
+    {% csrf_token %}
+    <input type="hidden" name="status" value="cancelled">
+    <button type="submit" class="btn btn-danger" onclick="return confirm('Annuler ce BC ?');">Annuler</button>
+  </form>
+  {% endif %}
+
+  <form method="post" action="{% url 'po-delete' po.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce bon de commande ?');">Supprimer</button>
+  </form>
+</div>
+{% endblock %}

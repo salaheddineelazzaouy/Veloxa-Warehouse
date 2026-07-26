@@ -4,6 +4,7 @@ from django.db.models import Q
 
 from ..models import StockMovement, Product
 from .stock import current_stock
+from .reservation import available_stock
 from lib.exceptions import InsufficientStock, DuplicateReference, InvalidMovement
 
 logger = logging.getLogger(__name__)
@@ -31,10 +32,10 @@ def fulfill_sales_order(
         if exists:
             raise DuplicateReference(f"SO {so_ref} already fulfilled")
 
-        available = current_stock(product_id)
-        if qty > available:
+        avail = available_stock(product_id)
+        if qty > avail:
             raise InsufficientStock(
-                f"Requested {qty}, available {available}"
+                f"Requested {qty}, available {avail}"
             )
 
         movement = StockMovement.objects.create(

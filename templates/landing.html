@@ -13,107 +13,166 @@
     html { scroll-behavior: smooth; }
     body {
       font-family: "Inter", system-ui, -apple-system, sans-serif;
-      background: #f8fafc;
-      color: #0f172a;
+      background: #0e0f13;
+      color: #ffffff;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
     .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
     @media (min-width: 768px) { .container { padding: 0 40px; } }
 
-    /* ── Nav ── */
-    nav {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(255,255,255,.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid #e2e8f0;
+    /* ── Floating Nav ── */
+    .nav-wrapper {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; width: calc(100% - 32px); max-width: 1100px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .35s ease, transform .35s ease;
+      transform: translateX(-50%) translateY(-12px);
     }
-    nav .container {
+    .nav-wrapper.visible {
+      opacity: 1; pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .nav-pill {
       display: flex; align-items: center; justify-content: space-between;
-      height: 64px;
+      padding: 10px 10px 10px 24px; border-radius: 999px;
+      background: rgba(14, 15, 19, .72);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, .08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .04);
     }
     .nav-logo {
       display: flex; align-items: center; gap: 10px;
-      font-size: 18px; font-weight: 800; color: #0f172a;
+      font-size: 16px; font-weight: 700; color: #fff;
       text-decoration: none;
     }
-    .nav-logo i { color: #2563eb; font-size: 20px; }
-    .nav-links { display: none; gap: 28px; list-style: none; }
+    .nav-logo i { color: #7a5fff; font-size: 18px; }
+    .nav-links { display: none; gap: 24px; list-style: none; }
     .nav-links a {
-      text-decoration: none; font-size: 14px; font-weight: 500;
-      color: #475569; transition: color .2s;
+      text-decoration: none; font-size: 13px; font-weight: 500;
+      color: rgba(255, 255, 255, .55); transition: color .2s;
     }
-    .nav-links a:hover, .nav-links a:focus-visible { color: #2563eb; outline: none; }
-    .nav-actions { display: flex; gap: 10px; }
+    .nav-links a:hover { color: #fff; }
+    .nav-actions { display: flex; gap: 8px; align-items: center; }
     .nav-toggle {
       display: flex; align-items: center; justify-content: center;
       width: 40px; height: 40px; border: none; background: none;
-      color: #0f172a; font-size: 20px; cursor: pointer; border-radius: 8px;
+      color: #fff; font-size: 18px; cursor: pointer; border-radius: 50%;
     }
-    .nav-toggle:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
     @media (min-width: 768px) {
       .nav-links { display: flex; }
       .nav-toggle { display: none; }
     }
     .mobile-menu {
-      display: none; flex-direction: column; gap: 6px;
-      padding: 12px 24px 20px; border-top: 1px solid #e2e8f0;
+      display: none; flex-direction: column; gap: 4px;
+      padding: 12px 24px 20px;
+      background: rgba(14, 15, 19, .92);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-radius: 16px; margin-top: 8px;
+      border: 1px solid rgba(255, 255, 255, .08);
     }
     .mobile-menu.open { display: flex; }
     .mobile-menu a {
-      padding: 8px 0; font-size: 14px; font-weight: 500;
-      color: #475569; text-decoration: none;
+      padding: 10px 0; font-size: 14px; font-weight: 500;
+      color: rgba(255, 255, 255, .6); text-decoration: none;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
     }
+    .mobile-menu a:last-child { border-bottom: none; }
 
     /* ── Buttons ── */
     .btn {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 22px; border-radius: 10px;
+      padding: 10px 22px; border-radius: 999px;
       font-size: 14px; font-weight: 600; font-family: inherit;
       cursor: pointer; text-decoration: none; border: none;
-      transition: all .2s;
+      transition: all .25s ease;
     }
-    .btn:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+    .btn:focus-visible { outline: 2px solid #7a5fff; outline-offset: 2px; }
     .btn-primary {
-      background: #2563eb; color: #fff;
-      box-shadow: 0 2px 12px rgba(37,99,235,.25);
+      background: #7a5fff; color: #fff;
+      box-shadow: 0 2px 20px rgba(122, 95, 255, .3);
     }
-    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(37,99,235,.3); }
+    .btn-primary:hover {
+      background: #8a6fff; transform: translateY(-1px);
+      box-shadow: 0 6px 30px rgba(122, 95, 255, .45);
+    }
     .btn-outline {
-      background: transparent; color: #475569;
-      border: 1.5px solid #cbd5e1;
+      background: transparent; color: rgba(255, 255, 255, .7);
+      border: 1.5px solid rgba(255, 255, 255, .12);
     }
-    .btn-outline:hover { border-color: #2563eb; color: #2563eb; }
-    .btn-white {
-      background: #fff; color: #2563eb;
+    .btn-outline:hover {
+      border-color: rgba(255, 255, 255, .3); color: #fff;
     }
-    .btn-white:hover { background: #f1f5f9; }
     .btn-lg { padding: 14px 30px; font-size: 15px; }
+
+    /* ── Top Nav (initial, scrolls away) ── */
+    nav.top-nav {
+      position: relative; z-index: 50;
+      padding: 16px 0;
+      background: transparent;
+    }
+    nav.top-nav .container {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    nav.top-nav .nav-logo { font-size: 18px; }
+    nav.top-nav .nav-links { display: none; gap: 28px; list-style: none; }
+    nav.top-nav .nav-links a {
+      text-decoration: none; font-size: 14px; font-weight: 500;
+      color: rgba(255, 255, 255, .55); transition: color .2s;
+    }
+    nav.top-nav .nav-links a:hover { color: #fff; }
+    nav.top-nav .nav-actions { display: flex; gap: 10px; }
+    nav.top-nav .nav-toggle {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border: none; background: none;
+      color: #fff; font-size: 20px; cursor: pointer; border-radius: 8px;
+    }
+    @media (min-width: 768px) {
+      nav.top-nav .nav-links { display: flex; }
+      nav.top-nav .nav-toggle { display: none; }
+    }
 
     /* ── Hero ── */
     .hero {
-      padding: 60px 0 56px;
-      background: linear-gradient(160deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);
+      padding: 80px 0 60px;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(122, 95, 255, .12) 0%, transparent 60%),
+                  #0e0f13;
       overflow: hidden;
+      position: relative;
     }
-    @media (min-width: 768px) { .hero { padding: 80px 0 72px; } }
-    .hero .container { display: flex; flex-direction: column; gap: 40px; }
+    @media (min-width: 768px) { .hero { padding: 100px 0 80px; } }
+    .hero .container { display: flex; flex-direction: column; gap: 48px; }
     @media (min-width: 768px) { .hero .container { flex-direction: row; align-items: center; gap: 56px; } }
     .hero-text { flex: 1; min-width: 0; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 999px;
+      background: rgba(122, 95, 255, .1);
+      border: 1px solid rgba(122, 95, 255, .2);
+      font-size: 12px; font-weight: 600; color: #7a5fff;
+      margin-bottom: 24px;
+    }
+    .hero-badge i { font-size: 10px; }
     .hero h1 {
-      font-size: 32px; font-weight: 800; line-height: 1.15;
-      letter-spacing: -.5px; margin-bottom: 16px;
+      font-size: 36px; font-weight: 800; line-height: 1.12;
+      letter-spacing: -.6px; margin-bottom: 18px;
+      background: linear-gradient(180deg, #ffffff 40%, rgba(255,255,255,.6) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    @media (min-width: 768px) { .hero h1 { font-size: 42px; } }
+    @media (min-width: 768px) { .hero h1 { font-size: 48px; } }
     .hero .sub {
-      font-size: 16px; color: #475569; line-height: 1.7;
-      margin-bottom: 28px; max-width: 480px;
+      font-size: 16px; color: rgba(255, 255, 255, .5); line-height: 1.7;
+      margin-bottom: 32px; max-width: 480px;
     }
-    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
     .hero-visual { flex: 1; min-width: 0; }
     .ledger-grid {
-      background: #0f172a; border-radius: 16px; padding: 20px;
-      box-shadow: 0 24px 64px rgba(15,23,42,.2);
+      background: #14151b; border-radius: 16px; padding: 20px;
+      border: 1px solid rgba(255, 255, 255, .06);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, .4);
     }
     .ledger-top { display: flex; gap: 6px; margin-bottom: 18px; }
     .ledger-dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -125,206 +184,324 @@
       display: grid; grid-template-columns: 60px 1fr 60px;
       gap: 8px; align-items: center;
       padding: 8px 10px; border-radius: 6px;
-      background: rgba(255,255,255,.04);
-      font-size: 11px; color: rgba(255,255,255,.6);
+      background: rgba(255, 255, 255, .03);
+      font-size: 11px; color: rgba(255, 255, 255, .45);
     }
     .ledger-row .tag {
       display: inline-block; padding: 2px 8px; border-radius: 4px;
       font-size: 10px; font-weight: 600; text-align: center;
     }
-    .tag-in { background: rgba(16,185,129,.2); color: #34d399; }
-    .tag-out { background: rgba(239,68,68,.2); color: #f87171; }
-    .tag-adj { background: rgba(251,191,36,.2); color: #fbbf24; }
+    .tag-in { background: rgba(16,185,129,.15); color: #34d399; }
+    .tag-out { background: rgba(239,68,68,.15); color: #f87171; }
+    .tag-adj { background: rgba(251,191,36,.15); color: #fbbf24; }
     .ledger-row .val { text-align: right; font-weight: 600; font-size: 12px; }
     .ledger-row .val.pos { color: #34d399; }
     .ledger-row .val.neg { color: #f87171; }
 
+    /* ── Logos ── */
+    .logos {
+      padding: 48px 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+    }
+    .logos-label {
+      text-align: center; font-size: 12px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, .25); margin-bottom: 28px;
+    }
+    .logos-track {
+      display: flex; gap: 48px; align-items: center;
+      overflow: hidden; position: relative;
+      mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    }
+    .logos-inner {
+      display: flex; gap: 48px; align-items: center;
+      animation: scroll-logos 30s linear infinite;
+      flex-shrink: 0;
+    }
+    .logos-inner .logo-item {
+      flex-shrink: 0; font-size: 16px; font-weight: 700;
+      color: rgba(255, 255, 255, .18); white-space: nowrap;
+      letter-spacing: -.2px; transition: color .3s;
+    }
+    .logos-inner .logo-item:hover { color: rgba(255, 255, 255, .35); }
+    @keyframes scroll-logos {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
     /* ── Trust Section ── */
     .trust {
-      padding: 48px 0;
-      background: #ffffff;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 64px 0;
+      background: transparent;
     }
-    .trust-grid { display: grid; gap: 24px; }
+    .trust-grid { display: grid; gap: 20px; }
     @media (min-width: 768px) { .trust-grid { grid-template-columns: repeat(3, 1fr); } }
     .trust-card {
       display: flex; gap: 16px; align-items: flex-start;
-      padding: 20px; border-radius: 12px;
-      background: #f8fafc; border: 1px solid #e2e8f0;
+      padding: 24px; border-radius: 14px;
+      background: rgba(255, 255, 255, .02);
+      border: 1px solid rgba(255, 255, 255, .06);
+      transition: all .3s ease;
+    }
+    .trust-card:hover {
+      border-color: rgba(255, 255, 255, .1);
+      background: rgba(255, 255, 255, .04);
+      transform: translateY(-2px);
     }
     .trust-icon {
-      width: 44px; height: 44px; border-radius: 10px;
+      width: 44px; height: 44px; border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; color: #fff; flex-shrink: 0;
     }
     .trust-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-    .trust-card p { font-size: 13px; color: #475569; line-height: 1.6; }
+    .trust-card p { font-size: 13px; color: rgba(255, 255, 255, .4); line-height: 1.6; }
+
+    /* ── Section Titles ── */
+    .section-title {
+      font-size: 28px; font-weight: 800; letter-spacing: -.4px;
+      text-align: center; margin-bottom: 12px;
+      background: linear-gradient(180deg, #ffffff 30%, rgba(255,255,255,.55) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    @media (min-width: 768px) { .section-title { font-size: 36px; } }
+    .section-sub {
+      font-size: 16px; color: rgba(255, 255, 255, .4); text-align: center;
+      max-width: 600px; margin: 0 auto 48px; line-height: 1.7;
+    }
 
     /* ── Features ── */
     .features {
-      padding: 64px 0 56px;
-      background: #ffffff;
+      padding: 72px 0 64px;
     }
-    .section-title {
-      font-size: 28px; font-weight: 800; letter-spacing: -.3px;
-      text-align: center; margin-bottom: 12px;
-    }
-    @media (min-width: 768px) { .section-title { font-size: 32px; } }
-    .section-sub {
-      font-size: 16px; color: #475569; text-align: center;
-      max-width: 600px; margin: 0 auto 44px; line-height: 1.7;
-    }
-    .features-grid { display: grid; gap: 20px; }
+    .features-grid { display: grid; gap: 16px; }
     @media (min-width: 768px) { .features-grid { grid-template-columns: 1fr 1fr; } }
     .feature-card {
-      display: flex; gap: 18px; padding: 24px;
-      border: 1px solid #e2e8f0; border-radius: 14px;
-      transition: all .2s;
+      display: flex; gap: 18px; padding: 28px;
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .02);
+      transition: all .3s ease;
     }
-    .feature-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,.06); }
+    .feature-card:hover {
+      border-color: rgba(122, 95, 255, .2);
+      background: rgba(255, 255, 255, .04);
+      transform: translateY(-2px);
+    }
     .feature-icon {
       width: 48px; height: 48px; border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; color: #fff; flex-shrink: 0;
     }
     .feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-    .feature-card p { font-size: 14px; color: #475569; line-height: 1.7; }
+    .feature-card p { font-size: 14px; color: rgba(255, 255, 255, .4); line-height: 1.7; }
 
     /* ── Architecture ── */
     .arch {
-      padding: 56px 0;
-      background: #f8fafc;
+      padding: 64px 0;
+      background: rgba(255, 255, 255, .015);
+      border-top: 1px solid rgba(255, 255, 255, .04);
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
     }
     .arch-diagram {
       display: flex; flex-wrap: wrap; gap: 12px;
       justify-content: center; align-items: center;
-      margin: 28px 0 16px;
+      margin: 32px 0 16px;
     }
     .arch-box {
-      padding: 14px 22px; border-radius: 10px;
+      padding: 14px 22px; border-radius: 12px;
       font-size: 13px; font-weight: 600; text-align: center;
-      border: 1px solid #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .04);
+      transition: all .3s ease;
     }
-    .arch-box.lb { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-    .arch-box.db { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
-    .arch-box.gr { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
-    .arch-box.sl { background: #f1f5f9; color: #334155; border-color: #e2e8f0; }
-    .arch-arrow { font-size: 18px; color: #94a3b8; }
+    .arch-box:hover { border-color: rgba(255, 255, 255, .15); }
+    .arch-box.lb { color: #7a5fff; border-color: rgba(122, 95, 255, .2); }
+    .arch-box.db { color: #a78bfa; border-color: rgba(167, 139, 250, .2); }
+    .arch-box.gr { color: #34d399; border-color: rgba(52, 211, 153, .2); }
+    .arch-box.sl { color: rgba(255, 255, 255, .5); }
+    .arch-arrow { font-size: 18px; color: rgba(255, 255, 255, .15); }
     .arch-footnote {
       text-align: center; font-size: 13px;
-      color: #64748b; margin-top: 8px;
+      color: rgba(255, 255, 255, .3); margin-top: 8px;
     }
-    .arch-footnote strong { color: #0f172a; }
+    .arch-footnote strong { color: rgba(255, 255, 255, .7); }
 
     /* ── Compliance ── */
     .compliance {
-      padding: 56px 0;
-      background: #ffffff;
+      padding: 72px 0 64px;
     }
     .compliance-card {
       max-width: 720px; margin: 0 auto;
-      background: #f8fafc; border: 1px solid #e2e8f0;
-      border-radius: 16px; padding: 36px 32px;
+      background: rgba(255, 255, 255, .02);
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 20px; padding: 40px 36px;
     }
     .compliance-card h3 {
-      font-size: 18px; font-weight: 700; margin-bottom: 16px;
+      font-size: 18px; font-weight: 700; margin-bottom: 20px;
       display: flex; align-items: center; gap: 10px;
     }
-    .compliance-card h3 i { color: #2563eb; }
-    .compliance-card ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .compliance-card h3 i { color: #7a5fff; }
+    .compliance-card ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
     .compliance-card ul li {
-      font-size: 14px; color: #334155;
+      font-size: 14px; color: rgba(255, 255, 255, .55);
       display: flex; align-items: flex-start; gap: 10px;
     }
-    .compliance-card ul li i { color: #2563eb; font-size: 13px; margin-top: 3px; }
+    .compliance-card ul li i { color: #7a5fff; font-size: 13px; margin-top: 3px; }
 
     /* ── Pricing ── */
     .pricing {
-      padding: 64px 0 56px;
-      background: #f8fafc;
+      padding: 72px 0 64px;
     }
-    .pricing-grid { display: grid; gap: 24px; }
+    .pricing-grid { display: grid; gap: 20px; }
     @media (min-width: 768px) { .pricing-grid { grid-template-columns: repeat(3, 1fr); } }
     .price-card {
-      background: #fff; border: 1px solid #e2e8f0;
-      border-radius: 16px; padding: 32px 28px;
-      position: relative; transition: all .2s;
+      background: rgba(255, 255, 255, .02); border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 20px; padding: 32px 28px;
+      position: relative; transition: all .3s ease;
     }
-    .price-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,.06); }
+    .price-card:hover {
+      border-color: rgba(255, 255, 255, .1);
+      transform: translateY(-2px);
+    }
     .price-card.popular {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 1px #2563eb;
+      border-color: rgba(122, 95, 255, .3);
+      background: rgba(122, 95, 255, .04);
+      box-shadow: 0 0 0 1px rgba(122, 95, 255, .15), 0 8px 40px rgba(122, 95, 255, .08);
     }
     .badge {
       position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-      background: #2563eb; color: #fff;
-      padding: 4px 18px; border-radius: 20px;
+      background: #7a5fff; color: #fff;
+      padding: 4px 18px; border-radius: 999px;
       font-size: 11px; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(122, 95, 255, .35);
     }
-    .price-card .plan { font-size: 14px; font-weight: 600; color: #2563eb; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
+    .price-card .plan { font-size: 14px; font-weight: 600; color: #7a5fff; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
     .price-card .amount { font-size: 36px; font-weight: 800; margin-bottom: 4px; }
-    .price-card .amount span { font-size: 14px; font-weight: 500; color: #64748b; }
-    .price-card .period { font-size: 13px; color: #64748b; margin-bottom: 20px; }
-    .price-card ul { list-style: none; margin-bottom: 24px; }
-    .price-card ul li { padding: 6px 0; font-size: 14px; color: #475569; display: flex; align-items: center; gap: 8px; }
-    .price-card ul li i { color: #10b981; font-size: 12px; }
+    .price-card .amount span { font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, .35); }
+    .price-card .period { font-size: 13px; color: rgba(255, 255, 255, .35); margin-bottom: 24px; }
+    .price-card ul { list-style: none; margin-bottom: 28px; }
+    .price-card ul li { padding: 6px 0; font-size: 14px; color: rgba(255, 255, 255, .5); display: flex; align-items: center; gap: 8px; }
+    .price-card ul li i { color: #7a5fff; font-size: 12px; }
     .price-card .btn { width: 100%; justify-content: center; }
+
+    /* ── FAQ ── */
+    .faq {
+      padding: 72px 0 64px;
+      background: rgba(255, 255, 255, .015);
+      border-top: 1px solid rgba(255, 255, 255, .04);
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
+    }
+    .faq-list {
+      max-width: 720px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .faq-item {
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .02);
+      overflow: hidden;
+      transition: border-color .3s;
+    }
+    .faq-item.open { border-color: rgba(255, 255, 255, .1); }
+    .faq-question {
+      width: 100%; display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 24px; border: none; background: none;
+      color: #fff; font-size: 15px; font-weight: 600; font-family: inherit;
+      cursor: pointer; text-align: left; gap: 16px;
+    }
+    .faq-question:hover { color: rgba(255, 255, 255, .85); }
+    .faq-question i {
+      font-size: 14px; color: rgba(255, 255, 255, .3);
+      transition: transform .3s ease; flex-shrink: 0;
+    }
+    .faq-item.open .faq-question i { transform: rotate(180deg); color: #7a5fff; }
+    .faq-answer {
+      max-height: 0; overflow: hidden;
+      transition: max-height .35s ease, padding .35s ease;
+    }
+    .faq-item.open .faq-answer {
+      max-height: 300px;
+    }
+    .faq-answer p {
+      padding: 0 24px 20px;
+      font-size: 14px; color: rgba(255, 255, 255, .4); line-height: 1.7;
+    }
 
     /* ── CTA ── */
     .cta {
-      padding: 56px 24px;
-      background: #0f172a;
+      padding: 80px 24px;
+      background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(122, 95, 255, .1) 0%, transparent 60%),
+                  #0e0f13;
       text-align: center;
     }
-    .cta h2 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
-    @media (min-width: 768px) { .cta h2 { font-size: 32px; } }
-    .cta p { color: #94a3b8; font-size: 16px; margin-bottom: 24px; }
+    .cta h2 {
+      font-size: 28px; font-weight: 800; margin-bottom: 8px;
+      background: linear-gradient(180deg, #ffffff 30%, rgba(255,255,255,.6) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    @media (min-width: 768px) { .cta h2 { font-size: 36px; } }
+    .cta p { color: rgba(255, 255, 255, .4); font-size: 16px; margin-bottom: 28px; }
     .cta-form { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
     .cta-form input {
-      padding: 14px 18px; border-radius: 10px; border: 1px solid #334155;
-      background: #1e293b; color: #fff; font-size: 15px;
+      padding: 14px 18px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .04); color: #fff; font-size: 15px;
       font-family: inherit; width: 320px; max-width: 100%; outline: none;
+      transition: border-color .3s;
     }
-    .cta-form input::placeholder { color: #64748b; }
-    .cta-form input:focus { border-color: #2563eb; }
+    .cta-form input::placeholder { color: rgba(255, 255, 255, .25); }
+    .cta-form input:focus { border-color: rgba(122, 95, 255, .5); }
     .cta-form .btn { padding: 14px 28px; }
-    .cta .footnote { font-size: 13px; color: #64748b; margin-top: 12px; }
+    .cta .footnote { font-size: 13px; color: rgba(255, 255, 255, .25); margin-top: 14px; }
 
     /* ── Footer ── */
     footer {
-      background: #0f172a; padding: 40px 0 28px;
-      border-top: 1px solid #1e293b;
+      background: #0a0a0d; padding: 48px 0 28px;
+      border-top: 1px solid rgba(255, 255, 255, .05);
     }
-    footer .container { display: flex; flex-direction: column; gap: 24px; }
+    footer .container { display: flex; flex-direction: column; gap: 32px; }
     @media (min-width: 768px) { footer .container { flex-direction: row; justify-content: space-between; align-items: flex-start; } }
     footer .col-brand .logo { color: #fff; }
-    footer .col-brand p { font-size: 13px; color: #64748b; max-width: 280px; margin-top: 6px; }
-    footer .col-links { display: flex; gap: 32px; flex-wrap: wrap; }
-    footer .col-links h5 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; margin-bottom: 12px; }
+    footer .col-brand p { font-size: 13px; color: rgba(255, 255, 255, .3); max-width: 280px; margin-top: 8px; line-height: 1.6; }
+    footer .col-links { display: flex; gap: 40px; flex-wrap: wrap; }
+    footer .col-links h5 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: rgba(255, 255, 255, .3); margin-bottom: 14px; }
     footer .col-links ul { list-style: none; }
-    footer .col-links ul li { margin-bottom: 8px; }
-    footer .col-links a { font-size: 14px; color: #475569; text-decoration: none; transition: color .2s; }
-    footer .col-links a:hover { color: #2563eb; }
+    footer .col-links ul li { margin-bottom: 10px; }
+    footer .col-links a { font-size: 14px; color: rgba(255, 255, 255, .35); text-decoration: none; transition: color .2s; }
+    footer .col-links a:hover { color: #7a5fff; }
     .footer-social { display: flex; gap: 10px; }
     .footer-social a {
-      width: 34px; height: 34px; border-radius: 8px;
-      background: rgba(255,255,255,.04);
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(255, 255, 255, .04);
       display: flex; align-items: center; justify-content: center;
-      color: #64748b; text-decoration: none; font-size: 14px; transition: all .2s;
+      color: rgba(255, 255, 255, .3); text-decoration: none; font-size: 14px;
+      transition: all .25s ease;
+      border: 1px solid rgba(255, 255, 255, .04);
     }
-    .footer-social a:hover { background: rgba(37,99,235,.15); color: #2563eb; }
+    .footer-social a:hover {
+      background: rgba(122, 95, 255, .12); color: #7a5fff;
+      border-color: rgba(122, 95, 255, .2);
+    }
     .footer-bottom {
       max-width: 1120px; margin: 24px auto 0; padding: 16px 24px 0;
-      border-top: 1px solid #1e293b;
+      border-top: 1px solid rgba(255, 255, 255, .04);
       display: flex; justify-content: space-between; flex-wrap: wrap;
-      font-size: 13px; color: #475569;
+      font-size: 12px; color: rgba(255, 255, 255, .2);
+    }
+
+    /* ── Utility ── */
+    @media (max-width: 767px) {
+      nav.top-nav .mobile-menu { display: none; }
+      nav.top-nav .mobile-menu.open { display: flex; }
     }
   </style>
 </head>
 <body>
 
-<!-- Nav -->
-<nav>
+<!-- Top Nav (visible at top, scrolls away) -->
+<nav class="top-nav" id="top-nav">
   <div class="container">
     <a href="/" class="nav-logo"><i class="fas fa-warehouse"></i> Veloxa Warehouse</a>
     <ul class="nav-links">
@@ -335,25 +512,53 @@
       <li><a href="/contact/">Contact</a></li>
     </ul>
     <div class="nav-actions">
-      <a href="/signup/" class="btn btn-primary">Get Started</a>
       <a href="/login/" class="btn btn-outline">Sign In</a>
+      <a href="/signup/" class="btn btn-primary">Get Started</a>
     </div>
-    <button class="nav-toggle" aria-label="Toggle menu" onclick="document.getElementById('mobile-menu').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+    <button class="nav-toggle" aria-label="Toggle menu" onclick="document.getElementById('top-mobile-menu').classList.toggle('open')"><i class="fas fa-bars"></i></button>
   </div>
-  <div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu" id="top-mobile-menu">
     <a href="#features" onclick="this.closest('.mobile-menu').classList.remove('open')">Features</a>
     <a href="#security" onclick="this.closest('.mobile-menu').classList.remove('open')">Security</a>
     <a href="#compliance" onclick="this.closest('.mobile-menu').classList.remove('open')">Compliance</a>
     <a href="#pricing" onclick="this.closest('.mobile-menu').classList.remove('open')">Pricing</a>
     <a href="/contact/" onclick="this.closest('.mobile-menu').classList.remove('open')">Contact</a>
-    <a href="/signup/" onclick="this.closest('.mobile-menu').classList.remove('open')" style="margin-top:6px">Get Started</a>
+    <a href="/signup/" onclick="this.closest('.mobile-menu').classList.remove('open')" style="margin-top:6px;color:#7a5fff;font-weight:600">Get Started</a>
   </div>
 </nav>
+
+<!-- Floating Pill Nav (appears on scroll) -->
+<div class="nav-wrapper" id="floating-nav">
+  <div class="nav-pill">
+    <a href="/" class="nav-logo"><i class="fas fa-warehouse"></i> Veloxa</a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#compliance">Compliance</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="/login/" class="btn btn-outline" style="padding:8px 18px;font-size:13px">Sign In</a>
+      <a href="/signup/" class="btn btn-primary" style="padding:8px 18px;font-size:13px">Get Started</a>
+      <button class="nav-toggle" aria-label="Toggle menu" onclick="document.getElementById('floating-mobile-menu').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="floating-mobile-menu" style="margin-top:8px">
+    <a href="#features" onclick="this.closest('.mobile-menu').classList.remove('open')">Features</a>
+    <a href="#security" onclick="this.closest('.mobile-menu').classList.remove('open')">Security</a>
+    <a href="#compliance" onclick="this.closest('.mobile-menu').classList.remove('open')">Compliance</a>
+    <a href="#pricing" onclick="this.closest('.mobile-menu').classList.remove('open')">Pricing</a>
+    <a href="/contact/" onclick="this.closest('.mobile-menu').classList.remove('open')">Contact</a>
+    <a href="/signup/" onclick="this.closest('.mobile-menu').classList.remove('open')" style="margin-top:6px;color:#7a5fff;font-weight:600">Get Started</a>
+  </div>
+</div>
 
 <!-- Hero -->
 <section class="hero">
   <div class="container">
     <div class="hero-text">
+      <div class="hero-badge"><i class="fas fa-bolt"></i> Immutable Inventory Ledger</div>
       <h1>{{ hero.headline|default:"Inventory you can trust. Stock you can verify." }}</h1>
       <p class="sub">{{ hero.subtitle|default:"Immutable ledger, automated back-orders, and full audit trails — all in a modular monolith. Compliant with CNDP/PCM and built for Moroccan logistics." }}</p>
       <div class="hero-actions">
@@ -377,31 +582,54 @@
           <div class="ledger-row"><span class="tag tag-out">OUT</span><span>SO-2026-0091 — Monitor 27″</span><span class="val neg">-8</span></div>
           <div class="ledger-row"><span class="tag tag-in">IN</span><span>PO-2026-0047 — SSD 1TB</span><span class="val pos">+200</span></div>
         </div>
-        <div style="text-align:right;margin-top:10px;font-size:10px;color:rgba(255,255,255,.35)">Immutable ledger — 1,247 entries</div>
+        <div style="text-align:right;margin-top:10px;font-size:10px;color:rgba(255,255,255,.2)">Immutable ledger — 1,247 entries</div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- Company Logos -->
+<div class="logos">
+  <div class="container">
+    <p class="logos-label">Trusted by logistics teams across Morocco</p>
+    <div class="logos-track">
+      <div class="logos-inner">
+        <span class="logo-item">MedLog</span>
+        <span class="logo-item">TransMaroc</span>
+        <span class="logo-item">AgriTech MA</span>
+        <span class="logo-item">Darna Group</span>
+        <span class="logo-item">Atlas Logistics</span>
+        <span class="logo-item">SaharaTrade</span>
+        <span class="logo-item">MedLog</span>
+        <span class="logo-item">TransMaroc</span>
+        <span class="logo-item">AgriTech MA</span>
+        <span class="logo-item">Darna Group</span>
+        <span class="logo-item">Atlas Logistics</span>
+        <span class="logo-item">SaharaTrade</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Trust -->
 <section class="trust" id="security">
   <div class="container trust-grid">
     {% for t in trust_cards %}
     <div class="trust-card">
-      <div class="trust-icon" style="background:{{ t.icon_bg|default:'linear-gradient(135deg,#2563eb,#1d4ed8)' }}"><i class="{{ t.icon_class|default:'fas fa-shield-alt' }}"></i></div>
+      <div class="trust-icon" style="background:{{ t.icon_bg|default:'linear-gradient(135deg,#7a5fff,#5a3fd6)' }}"><i class="{{ t.icon_class|default:'fas fa-shield-alt' }}"></i></div>
       <div><h4>{{ t.title }}</h4><p>{{ t.description }}</p></div>
     </div>
     {% empty %}
     <div class="trust-card">
-      <div class="trust-icon" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)"><i class="fas fa-shield-alt"></i></div>
+      <div class="trust-icon" style="background:linear-gradient(135deg,#7a5fff,#5a3fd6)"><i class="fas fa-shield-alt"></i></div>
       <div><h4>AES-256-GCM encryption</h4><p>Phone numbers and addresses are encrypted at the field level using AES-256-GCM. Database TDE adds a second layer of protection at rest.</p></div>
     </div>
     <div class="trust-card">
-      <div class="trust-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)"><i class="fas fa-key"></i></div>
+      <div class="trust-icon" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)"><i class="fas fa-key"></i></div>
       <div><h4>RBAC + JWT</h4><p>Granular roles (Warehouse Manager, Auditor, Read-Only) enforced through signed JWTs with 30-minute token rotation and refresh.</p></div>
     </div>
     <div class="trust-card">
-      <div class="trust-icon" style="background:linear-gradient(135deg,#059669,#047857)"><i class="fas fa-check-circle"></i></div>
+      <div class="trust-icon" style="background:linear-gradient(135deg,#34d399,#059669)"><i class="fas fa-check-circle"></i></div>
       <div><h4>GDPR / CNDP ready</h4><p>Built to comply with Moroccan Law 09-08. Data minimisation, right to anonymisation, and full audit trail for every PII access.</p></div>
     </div>
     {% endfor %}
@@ -416,32 +644,32 @@
     <div class="features-grid">
       {% for f in features %}
       <div class="feature-card">
-        <div class="feature-icon" style="background:linear-gradient(135deg,{{ f.icon_bg|default:'#2563eb' }},{{ f.icon_bg_end|default:'#1d4ed8' }})"><i class="{{ f.icon_class|default:'fas fa-book' }}"></i></div>
+        <div class="feature-icon" style="background:linear-gradient(135deg,{{ f.icon_bg|default:'#7a5fff' }},{{ f.icon_bg_end|default:'#5a3fd6' }})"><i class="{{ f.icon_class|default:'fas fa-book' }}"></i></div>
         <div><h3>{{ f.title }}</h3><p>{{ f.description }}</p></div>
       </div>
       {% empty %}
       <div class="feature-card">
-        <div class="feature-icon" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)"><i class="fas fa-book"></i></div>
+        <div class="feature-icon" style="background:linear-gradient(135deg,#7a5fff,#5a3fd6)"><i class="fas fa-book"></i></div>
         <div><h3>Immutable stock ledger</h3><p>Every inbound, outbound, and adjustment is a permanent, signed movement. Current quantity is always derived via SUM() over the ledger — no stock field.</p></div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)"><i class="fas fa-arrows-spin"></i></div>
+        <div class="feature-icon" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)"><i class="fas fa-arrows-spin"></i></div>
         <div><h3>Back-order isolation</h3><p>Deficit tracking runs in a separate bounded context. When inbound stock arrives, the system automatically fulfills open back-orders.</p></div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon" style="background:linear-gradient(135deg,#059669,#047857)"><i class="fas fa-clipboard-list"></i></div>
+        <div class="feature-icon" style="background:linear-gradient(135deg,#34d399,#059669)"><i class="fas fa-clipboard-list"></i></div>
         <div><h3>Audit trail + PII redaction</h3><p>Every mutation and PII read is logged. Raw PII never reaches log files — automatic redaction built in.</p></div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon" style="background:linear-gradient(135deg,#d97706,#b45309)"><i class="fas fa-users-cog"></i></div>
+        <div class="feature-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-users-cog"></i></div>
         <div><h3>Role-based access</h3><p>Four built-in roles with granular permissions. Auditors can inspect every movement but never modify data.</p></div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon" style="background:linear-gradient(135deg,#dc2626,#b91c1c)"><i class="fas fa-link"></i></div>
+        <div class="feature-icon" style="background:linear-gradient(135deg,#f87171,#dc2626)"><i class="fas fa-link"></i></div>
         <div><h3>Atomic transactions</h3><p>All stock operations run inside @transaction.atomic with row locking. No over-selling, no race conditions.</p></div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon" style="background:linear-gradient(135deg,#0d9488,#0f766e)"><i class="fas fa-code"></i></div>
+        <div class="feature-icon" style="background:linear-gradient(135deg,#2dd4bf,#0d9488)"><i class="fas fa-code"></i></div>
         <div><h3>API-first</h3><p>Built with Django REST Framework + JWT. Rate limited at 100/h anonymous, 1,000/h authenticated. Full OpenAPI docs.</p></div>
       </div>
       {% endfor %}
@@ -459,7 +687,7 @@
       <span class="arch-box db"><i class="fab fa-python"></i> Django 5.1</span>
       <span class="arch-arrow"><i class="fas fa-arrow-right"></i></span>
       <span class="arch-box gr"><i class="fas fa-database"></i> PostgreSQL 16</span>
-      <span style="font-size:14px;color:#94a3b8">+</span>
+      <span style="font-size:14px;color:rgba(255,255,255,.15)">+</span>
       <span class="arch-box gr"><i class="fas fa-bolt"></i> Redis 7</span>
     </div>
     <p class="arch-footnote"><strong>No raw SQL. No stock fields. Only immutable movements.</strong> — Zero-downtime migrations, blue-green deployment, modular monolith.</p>
@@ -550,6 +778,61 @@
   </div>
 </section>
 
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <h2 class="section-title">Frequently asked questions</h2>
+    <p class="section-sub">Everything you need to know about Veloxa Warehouse.</p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>How does the immutable ledger work?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Every stock movement (inbound, outbound, adjustment) is recorded as an immutable entry. Current quantity is always computed via SUM() over the ledger — there is no mutable "stock" field. This guarantees a tamper-proof audit trail.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>Is Veloxa compliant with Moroccan data protection law?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Yes. Veloxa is built to comply with Law 09-08 (CNDP/PCM). It includes field-level AES-256-GCM encryption, data minimisation, right to anonymisation after 5 years of inactivity, and a full audit trail for every PII access.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>Can I integrate with my existing ERP?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Veloxa provides a full REST API built with Django REST Framework + JWT. Rate limited at 100/h for anonymous and 1,000/h for authenticated requests, with complete OpenAPI documentation for easy integration.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>How does the back-order system work?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-answer">
+          <p>When stock falls below demand, the deficit is tracked in a separate bounded context. When new inbound stock arrives, the system automatically fulfills open back-orders in priority order — no manual intervention needed.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>Is there a free trial?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-answer">
+          <p>Yes. Every plan includes a 14-day free trial with full access. No credit card required to get started. You can upgrade, downgrade, or cancel at any time.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CTA -->
 <section class="cta" id="contact">
   <h2>{{ cta.headline|default:"Ready to move beyond spreadsheets?" }}</h2>
@@ -567,7 +850,7 @@
 <footer>
   <div class="container">
     <div class="col-brand">
-      <span class="logo" style="font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px"><i class="fas fa-warehouse" style="color:#2563eb"></i> Veloxa Warehouse</span>
+      <span class="logo" style="font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px"><i class="fas fa-warehouse" style="color:#7a5fff"></i> Veloxa Warehouse</span>
       <p>Immutable inventory system built for Moroccan compliance (CNDP/PCM). Modular monolith — Django 5.1 + PostgreSQL 16 + Redis 7.</p>
     </div>
     <div class="col-links">
@@ -589,6 +872,14 @@
           <li><a href="/legal/">Legal</a></li>
         </ul>
       </div>
+      <div>
+        <h5>Legal</h5>
+        <ul>
+          <li><a href="/terms/">Terms &amp; Conditions</a></li>
+          <li><a href="/privacy/">Privacy Policy</a></li>
+          <li><a href="/refund-policy/">Refund Policy</a></li>
+        </ul>
+      </div>
     </div>
     <div class="footer-social">
       <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
@@ -597,10 +888,43 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <span>&copy; 2026 Veloxa. All rights reserved.</span>
-    <span>app.veloxa.ma — Warehouse Inventory System. Immutable ledger since 2026.</span>
+    <span>&copy; 2026 Veloxa SARL. All rights reserved.</span>
+    <span><a href="/terms/" style="color:#475569">Terms</a> &nbsp;·&nbsp; <a href="/privacy/" style="color:#475569">Privacy</a> &nbsp;·&nbsp; <a href="/refund-policy/" style="color:#475569">Refunds</a></span>
   </div>
 </footer>
+
+<script>
+(function() {
+  var floatingNav = document.getElementById('floating-nav');
+  var topNav = document.getElementById('top-nav');
+  var navHeight = topNav.offsetHeight;
+  var trigger = navHeight + 120;
+
+  function onScroll() {
+    if (window.scrollY > trigger) {
+      floatingNav.classList.add('visible');
+    } else {
+      floatingNav.classList.remove('visible');
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+
+function toggleFaq(btn) {
+  var item = btn.closest('.faq-item');
+  var wasOpen = item.classList.contains('open');
+
+  document.querySelectorAll('.faq-item.open').forEach(function(el) {
+    el.classList.remove('open');
+  });
+
+  if (!wasOpen) {
+    item.classList.add('open');
+  }
+}
+</script>
 
 </body>
 </html>

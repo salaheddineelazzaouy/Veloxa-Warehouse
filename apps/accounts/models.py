@@ -4,8 +4,10 @@ from django.db import models
 
 class TenantAwareUserManager(UserManager):
     def get_queryset(self):
-        from apps.tenants.utils import get_current_tenant_id
+        from apps.tenants.utils import get_current_tenant_id, is_tenant_bypassed
         qs = super().get_queryset()
+        if is_tenant_bypassed():
+            return qs
         tenant_id = get_current_tenant_id()
         if tenant_id is not None:
             return qs.filter(tenant_id=tenant_id)

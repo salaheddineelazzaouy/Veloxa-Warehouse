@@ -17,6 +17,11 @@
     <div class="stat-value">{{ stats.movements }}</div>
   </div>
   <div class="stat-card">
+    <div class="stat-label">Reserved</div>
+    <div class="stat-value {% if stats.reserved > 0 %}text-warning{% endif %}">{{ stats.reserved }}</div>
+    {% if stats.reserved > 0 %}<div class="stat-sub">{{ stats.active_reservations }} active reservations</div>{% endif %}
+  </div>
+  <div class="stat-card">
     <div class="stat-label">Customers</div>
     <div class="stat-value">{{ stats.customers }}</div>
   </div>
@@ -38,6 +43,19 @@
     <div class="stat-value">{{ stats.users }}</div>
   </div>
 </div>
+
+{% if tenant %}
+<div class="card mt-2">
+  <div class="card-header"><h2>Tenant</h2></div>
+  <div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap">
+    <div><span class="stat-label">Name</span><div class="stat-value" style="font-size:18px">{{ tenant.name }}</div></div>
+    <div><span class="stat-label">Slug</span><div>{{ tenant.slug }}</div></div>
+    {% if tenant.domain %}<div><span class="stat-label">Domain</span><div>{{ tenant.domain }}</div></div>{% endif %}
+    <div><span class="stat-label">Status</span><div>{% if tenant.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</div></div>
+    <div><span class="stat-label">Created</span><div>{{ tenant.created_at|date:"Y-m-d" }}</div></div>
+  </div>
+</div>
+{% endif %}
 
 {% if subscription %}
 <div class="card mt-2">

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer — Veloxa Warehouse{% endblock %}
+{% block page_title %}Confirmer la Suppression{% endblock %}
+{% block active %}commerce{% endblock %}
+{% block content %}
+<div class="card" style="max-width:500px">
+  <div class="card-body">
+    <div class="confirm-box">
+      <p>Êtes-vous sûr de vouloir supprimer <strong>{{ label }}</strong> ?</p>
+      <div class="form-actions">
+        <form method="post">{% csrf_token %}<button class="btn btn-danger">Supprimer</button></form>
+        <a href="javascript:history.back()" class="btn">Annuler</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

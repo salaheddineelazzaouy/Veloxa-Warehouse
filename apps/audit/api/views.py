@@ -1,19 +1,18 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import AuditLog
 from ..services import detect_anomaly
 from .serializers import AuditLogSerializer
+from apps.accounts.permissions import RoleBasedPermission
 
 
 class AuditLogListView(generics.ListAPIView):
-    queryset = AuditLog.objects.select_related("user").all()
     serializer_class = AuditLogSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = AuditLog.objects.select_related("user").all()
         action = self.request.query_params.get("action")
         if action:
             qs = qs.filter(action=action)
@@ -24,7 +23,7 @@ class AuditLogListView(generics.ListAPIView):
 
 
 class AnomalyCheckView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def get(self, request):
         minutes = int(request.query_params.get("minutes", 5))

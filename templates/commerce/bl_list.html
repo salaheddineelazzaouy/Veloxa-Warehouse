@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Bons de Livraison — Veloxa Warehouse{% endblock %}
+{% block page_title %}Bons de Livraison{% endblock %}
+{% block active %}bl{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><h2>Bons de Livraison</h2><a href="{% url 'bl-create' %}" class="btn btn-primary" style="margin-left:auto">+ Nouveau</a></div>
+  <div class="card-body">
+
+    <form method="get" class="filter-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:16px">
+      <div style="flex:2;min-width:180px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Recherche</label>
+        <input type="text" name="q" class="form-control" placeholder="Réf, client..." value="{{ q }}">
+      </div>
+      <div style="min-width:140px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Statut</label>
+        <select name="status" class="form-control">
+          <option value="">Tous</option>
+          <option value="draft" {% if status == "draft" %}selected{% endif %}>Brouillon</option>
+          <option value="delivered" {% if status == "delivered" %}selected{% endif %}>Livré</option>
+          <option value="partial" {% if status == "partial" %}selected{% endif %}>Livraison partielle</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+        <a href="{% url 'bl-list' %}" class="btn">Réinitialiser</a>
+      </div>
+    </form>
+
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">{{ bls|length }} bon{{ bls|length|pluralize }} de livraison</div>
+
+    <table class="table">
+      <thead><tr>
+        <th>Réf</th>
+        <th>Client</th>
+        <th>Statut</th>
+        <th>Date Livraison</th>
+        <th class="actions-cell">Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for inv in bls %}
+        <tr>
+          <td><code>{{ inv.ref }}</code></td>
+          <td>{{ inv.customer_name|default:inv.customer.name|default:"—" }}</td>
+          <td>
+            {% if inv.status == "draft" %}<span class="badge badge-muted">Brouillon</span>
+            {% elif inv.status == "delivered" %}<span class="badge badge-success">Livré</span>
+            {% elif inv.status == "partial" %}<span class="badge badge-warning">Livraison partielle</span>
+            {% endif %}
+          </td>
+          <td>{{ inv.delivery_date|date:"d/m/Y"|default:"—" }}</td>
+          <td class="actions-cell">
+            <a href="{% url 'bl-detail' pk=inv.pk %}" class="btn btn-sm">Voir</a>
+            <a href="{% url 'bl-edit' pk=inv.pk %}" class="btn btn-sm">Modifier</a>
+            <form method="post" action="{% url 'bl-delete' pk=inv.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-danger">Del</button></form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="empty">Aucun document trouvé.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Modifier {{ brt.ref }}{% else %}Nouveau BRT{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h1 style="margin: 0;">{% if editing %}Modifier {{ brt.ref }}{% else %}Nouveau BRT{% endif %}</h1>
+  </div>
+  <div class="card-body">
+    <form method="post" id="brt-form">
+      {% csrf_token %}
+      <input type="hidden" name="editing" value="{{ editing|yesno:'1,0' }}">
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">Client</label>
+          <select name="customer_id" class="form-control" required>
+            <option value="">— Sélectionner un client —</option>
+            {% for c in customers %}
+            <option value="{{ c.id }}" {% if editing and brt.customer_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Motif général</label>
+          <textarea name="reason" class="form-control" rows="2">{{ brt.reason|default:'' }}</textarea>
+        </div>
+      </div>
+
+      {% if editing %}
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label">Statut</label>
+        <select name="status" class="form-control">
+          <option value="draft" {% if brt.status == 'draft' %}selected{% endif %}>Brouillon</option>
+          <option value="approved" {% if brt.status == 'approved' %}selected{% endif %}>Approuvé</option>
+          <option value="rejected" {% if brt.status == 'rejected' %}selected{% endif %}>Rejeté</option>
+        </select>
+      </div>
+      {% endif %}
+
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <strong>Lignes</strong>
+          <button type="button" class="btn btn-sm btn-outline" onclick="addLine()">+ Ajouter</button>
+        </div>
+        <div class="card-body" style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse;" id="lines-table">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border);">
+                <th style="padding: 0.5rem;">Produit</th>
+                <th style="padding: 0.5rem; text-align: right;">Qté</th>
+                <th style="padding: 0.5rem;">Motif</th>
+                <th style="padding: 0.5rem;"></th>
+              </tr>
+            </thead>
+            <tbody id="lines-body">
+              {% if editing %}
+              {% for line in brt.lines.all %}
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.3rem;">
+                  <select name="line_product[]" class="form-control" required>
+                    <option value="">—</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" {% if line.product_id == p.id %}selected{% endif %}>{{ p.sku }} — {{ p.name }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td style="padding: 0.3rem;"><input type="number" name="line_qty[]" class="form-control" value="{{ line.qty }}" min="1" step="1" required style="width: 80px;"></td>
+                <td style="padding: 0.3rem;"><input type="text" name="line_reason[]" class="form-control" value="{{ line.reason|default:'' }}"></td>
+                <td style="padding: 0.3rem;"><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove();">✕</button></td>
+              </tr>
+              {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button type="submit" class="btn btn-primary">{% if editing %}Mettre à jour{% else %}Créer le BRT{% endif %}</button>
+        {% if editing %}
+        <a href="{% url 'brt-detail' brt.id %}" class="btn btn-outline">Annuler</a>
+        {% else %}
+        <a href="{% url 'brt-list' %}" class="btn btn-outline">Annuler</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function addLine() {
+  var tbody = document.getElementById('lines-body');
+  var tr = document.createElement('tr');
+  tr.style.borderBottom = '1px solid var(--border)';
+  tr.innerHTML = '<td style="padding:0.3rem;"><select name="line_product[]" class="form-control" required><option value="">—</option>{% for p in products %}<option value="{{ p.id }}">{{ p.sku }} — {{ p.name }}</option>{% endfor %}</select></td>'
+    + '<td style="padding:0.3rem;"><input type="number" name="line_qty[]" class="form-control" value="1" min="1" step="1" required style="width:80px;"></td>'
+    + '<td style="padding:0.3rem;"><input type="text" name="line_reason[]" class="form-control"></td>'
+    + '<td style="padding:0.3rem;"><button type="button" class="btn btn-sm btn-danger" onclick="this.closest(\'tr\').remove();">✕</button></td>';
+  tbody.appendChild(tr);
+}
+</script>
+{% endblock %}

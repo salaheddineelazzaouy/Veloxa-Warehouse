@@ -8,12 +8,11 @@ User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8, max_length=128)
-    role = serializers.ChoiceField(choices=User.ROLE_CHOICES, default="viewer")
     plan_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = User
-        fields = ("username", "email", "password", "role", "plan_id")
+        fields = ("username", "email", "password", "plan_id")
 
     def validate_plan_id(self, value):
         if value is None:
@@ -25,6 +24,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         from .services import create_user
         plan_id = validated_data.pop("plan_id", None)
+        validated_data["role"] = "viewer"
         user = create_user(**validated_data)
         if plan_id:
             from apps.subscriptions.models import Subscription
@@ -54,3 +54,4 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "username", "first_name", "last_name", "email", "role", "is_active", "date_joined")
+        read_only_fields = ("id", "username", "role", "is_active", "date_joined")

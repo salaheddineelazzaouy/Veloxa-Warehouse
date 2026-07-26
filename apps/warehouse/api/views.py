@@ -1,19 +1,22 @@
 import logging
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from django.db.models import Sum, Count, Q, Subquery, OuterRef, IntegerField
 from django.utils import timezone
 from datetime import timedelta
 
-from ..models import Product, StockMovement, Category
+from ..models import Product, StockMovement, Category, StockReservation
 from ..services import (
     receive_purchase_order,
     fulfill_sales_order,
     adjustment,
     current_stock,
+    available_stock,
     reconcile,
+    reserve_stock,
+    confirm_reservation,
+    release_reservation,
 )
 from .serializers import (
     ProductSerializer,
@@ -23,7 +26,10 @@ from .serializers import (
     AdjustmentSerializer,
     ReconcileSerializer,
     MovementSerializer,
+    ReserveSerializer,
+    ReservationSerializer,
 )
+from apps.accounts.permissions import RoleBasedPermission
 from apps.crm.models import Customer as CRMCustomer
 from apps.finance.models import Invoice
 from apps.backorder.models import BackOrder
@@ -33,8 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProductListCreateView(generics.ListCreateAPIView):
-    queryset = Product.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -53,8 +58,10 @@ class ProductListCreateView(generics.ListCreateAPIView):
 
 
 class ProductDetailView(generics.RetrieveUpdateAPIView):
-    queryset = Product.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
+
+    def get_queryset(self):
+        return Product.objects.all()
 
     def get_serializer_class(self):
         if self.request.method in ("PUT", "PATCH"):
@@ -64,7 +71,7 @@ class ProductDetailView(generics.RetrieveUpdateAPIView):
 
 class InboundView(generics.GenericAPIView):
     serializer_class = InboundSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
     throttle_classes = [StockMutationThrottle]
 
     def post(self, request):
@@ -90,7 +97,7 @@ class InboundView(generics.GenericAPIView):
 
 class OutboundView(generics.GenericAPIView):
     serializer_class = OutboundSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
     throttle_classes = [StockMutationThrottle]
 
     def post(self, request):
@@ -116,7 +123,7 @@ class OutboundView(generics.GenericAPIView):
 
 class AdjustmentView(generics.GenericAPIView):
     serializer_class = AdjustmentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
     throttle_classes = [StockMutationThrottle]
 
     def post(self, request):
@@ -139,7 +146,7 @@ class AdjustmentView(generics.GenericAPIView):
 
 
 class StockCheckView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def get(self, request, product_id):
         stock = current_stock(product_id)
@@ -148,7 +155,7 @@ class StockCheckView(generics.GenericAPIView):
 
 class ReconcileView(generics.GenericAPIView):
     serializer_class = ReconcileSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -162,7 +169,7 @@ class ReconcileView(generics.GenericAPIView):
 
 class MovementListView(generics.ListAPIView):
     serializer_class = MovementSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def get_queryset(self):
         qs = StockMovement.objects.select_related("product", "created_by")
@@ -176,7 +183,7 @@ class MovementListView(generics.ListAPIView):
 
 
 class DashboardStatsView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def get(self, request):
         tenant = request.user.tenant
@@ -279,3 +286,69 @@ class DashboardStatsView(generics.GenericAPIView):
             "low_stock_products": low_stock_list,
             "recent_movements": recent_list,
         })
+
+
+class ReserveView(generics.GenericAPIView):
+    serializer_class = ReserveSerializer
+    permission_classes = [RoleBasedPermission]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        d = serializer.validated_data
+        ttl = timedelta(hours=d["ttl_hours"])
+        reservation = reserve_stock(
+            product_id=d["product_id"],
+            qty=d["qty"],
+            order_ref=d["order_ref"],
+            user=request.user,
+            ttl=ttl,
+        )
+        return Response(
+            ReservationSerializer(reservation).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class ConfirmReservationView(generics.GenericAPIView):
+    permission_classes = [RoleBasedPermission]
+
+    def post(self, request, pk):
+        result = confirm_reservation(reservation_id=pk, user=request.user)
+        movement = result["movement"]
+        return Response({
+            "reservation_id": pk,
+            "movement_id": movement.id,
+            "stock_after": result["stock_after"],
+        })
+
+
+class ReleaseReservationView(generics.GenericAPIView):
+    permission_classes = [RoleBasedPermission]
+
+    def post(self, request, pk):
+        reason = request.data.get("reason", "")
+        reservation = release_reservation(
+            reservation_id=pk, user=request.user, reason=reason,
+        )
+        return Response(ReservationSerializer(reservation).data)
+
+
+class ReservationListView(generics.ListAPIView):
+    serializer_class = ReservationSerializer
+    permission_classes = [RoleBasedPermission]
+
+    def get_queryset(self):
+        qs = StockReservation.objects.select_related("product", "created_by")
+        product_id = self.request.query_params.get("product_id")
+        if product_id:
+            qs = qs.filter(product_id=product_id)
+        order_ref = self.request.query_params.get("order_ref")
+        if order_ref:
+            qs = qs.filter(order_ref=order_ref)
+        reservation_status = self.request.query_params.get("status")
+        if reservation_status:
+            qs = qs.filter(status=reservation_status)
+        else:
+            qs = qs.filter(status=StockReservation.Status.ACTIVE)
+        return qs

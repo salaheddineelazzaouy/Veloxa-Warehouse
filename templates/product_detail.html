@@ -10,10 +10,33 @@
     <div class="detail-field"><div class="detail-label">Cost Price</div><div class="detail-value">{{ product.cost_price }} MAD</div></div>
     <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value">{% if product.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}</div></div>
     <div class="detail-field"><div class="detail-label">Current Stock</div><div class="detail-value">{{ net_stock }}</div></div>
+    <div class="detail-field"><div class="detail-label">Available</div><div class="detail-value {% if available_stock < net_stock %}text-warning{% endif %}">{{ available_stock }}</div></div>
+    <div class="detail-field"><div class="detail-label">Reserved</div><div class="detail-value">{% if reserved_qty > 0 %}<span class="badge badge-warning">{{ reserved_qty }}</span>{% else %}0{% endif %}</div></div>
     <div class="detail-field"><div class="detail-label">Created</div><div class="detail-value">{{ product.created_at|date:"Y-m-d H:i" }}</div></div>
     <div class="detail-field"><div class="detail-label">Updated</div><div class="detail-value">{{ product.updated_at|date:"Y-m-d H:i" }}</div></div>
     {% if product.description %}<div class="detail-field full-width"><div class="detail-label">Description</div><div class="detail-value">{{ product.description }}</div></div>{% endif %}
   </div></div></div>
+
+{% if active_reservations %}
+<div class="card mt-2">
+  <div class="card-header"><h2>Active Reservations</h2></div>
+  <div class="card-body">
+    <table class="table"><thead><tr><th>ID</th><th>Order Ref</th><th>Qty</th><th>Expires</th><th>By</th><th class="actions-cell">Actions</th></tr></thead>
+    <tbody>{% for r in active_reservations %}<tr>
+      <td><code>RES-{{ r.id }}</code></td>
+      <td><code>{{ r.order_ref }}</code></td>
+      <td>{{ r.qty }}</td>
+      <td>{{ r.expires_at|date:"Y-m-d H:i" }}</td>
+      <td>{{ r.created_by.username }}</td>
+      <td class="actions-cell">
+        <form method="post" action="{% url 'reservation-confirm' pk=r.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-success">Confirm</button></form>
+        <form method="post" action="{% url 'reservation-release' pk=r.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-danger">Release</button></form>
+      </td>
+    </tr>{% endfor %}</tbody></table>
+  </div>
+</div>
+{% endif %}
+
 <div class="card mt-2">
   <div class="card-header"><h2>Stock Movements</h2></div>
   <div class="card-body">

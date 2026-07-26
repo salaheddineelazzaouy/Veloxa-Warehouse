@@ -1,4 +1,4 @@
-from .utils import set_current_tenant
+from .utils import set_current_tenant, _thread_local
 
 
 class TenantMiddleware:
@@ -7,10 +7,19 @@ class TenantMiddleware:
 
     def __call__(self, request):
         tenant = None
-        if request.user.is_authenticated and hasattr(request.user, "tenant") and request.user.tenant_id:
-            if not request.user.is_superuser:
-                tenant = request.user.tenant
+        bypass = False
+
+        if not request.user.is_authenticated or request.user.is_superuser:
+            bypass = True
+        elif hasattr(request.user, "tenant") and request.user.tenant_id:
+            tenant = request.user.tenant
+
+        if tenant is None:
+            bypass = True
+
         request.tenant = tenant
         set_current_tenant(tenant)
+        _thread_local._tenant_bypass = bypass
+
         response = self.get_response(request)
         return response

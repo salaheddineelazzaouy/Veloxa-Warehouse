@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}BRT {{ brt.ref }}{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="margin: 0;">BON DE RETOUR</h1>
+    <div>
+      {% if brt.status == 'draft' %}
+      <span class="badge badge-muted">Brouillon</span>
+      {% elif brt.status == 'approved' %}
+      <span class="badge badge-success">Approuvé</span>
+      {% elif brt.status == 'rejected' %}
+      <span class="badge badge-danger">Rejeté</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="detail-label">Référence</div>
+        <div class="detail-value">{{ brt.ref }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Date</div>
+        <div class="detail-value">{{ brt.date|date:"d/m/Y" }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Statut</div>
+        <div class="detail-value">{{ brt.get_status_display }}</div>
+      </div>
+      {% if brt.reason %}
+      <div class="detail-field" style="grid-column: 1 / -1;">
+        <div class="detail-label">Motif général</div>
+        <div class="detail-value">{{ brt.reason }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header">Client</div>
+  <div class="card-body">
+    <p><strong>{{ brt.customer.name }}</strong></p>
+    <p>{{ brt.customer.address }}</p>
+    {% if brt.customer.ice %}<p>ICE : {{ brt.customer.ice }}</p>{% endif %}
+    {% if brt.customer.identifiant_fiscal %}<p>Identifiant fiscal : {{ brt.customer.identifiant_fiscal }}</p>{% endif %}
+    {% if brt.customer.registre_commerce %}<p>Registre du commerce : {{ brt.customer.registre_commerce }}</p>{% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header">Détail des lignes</div>
+  <div class="card-body" style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+          <th style="padding: 0.5rem;">#</th>
+          <th style="padding: 0.5rem;">Produit</th>
+          <th style="padding: 0.5rem; text-align: right;">Qté</th>
+          <th style="padding: 0.5rem;">Motif</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in brt.lines.all %}
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 0.5rem;">{{ forloop.counter }}</td>
+          <td style="padding: 0.5rem;">{{ line.product.sku }} — {{ line.product.name }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.qty }}</td>
+          <td style="padding: 0.5rem;">{{ line.reason|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+  <button onclick="window.print();" class="btn btn-outline">Imprimer</button>
+  <a href="{% url 'brt-edit' brt.id %}" class="btn btn-primary">Modifier</a>
+  <a href="{% url 'brt-list' %}" class="btn btn-outline">Retour</a>
+  <form method="post" action="{% url 'brt-delete' brt.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce bon de retour ?');">Supprimer</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,6 +1,86 @@
-{% extends 'base.html' %}{% block title %}Invoices — Veloxa Warehouse{% endblock %}{% block page_title %}Invoices{% endblock %}{% block active %}invoices{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Factures — Veloxa Warehouse{% endblock %}
+{% block page_title %}Factures{% endblock %}
+{% block active %}invoices{% endblock %}
 {% block content %}
-<div class="card"><div class="card-header"><h2>All Invoices</h2><a href="{% url 'invoice-create' %}" class="btn btn-primary" style="margin-left:auto">+ New Invoice</a></div><div class="card-body">
-<table class="table"><thead><tr><th>Invoice Ref</th><th>Order Ref</th><th>Customer</th><th>Total</th><th>Date</th><th class="actions-cell">Actions</th></tr></thead>
-<tbody>{% for inv in invoices %}<tr><td><code>{{ inv.invoice_ref }}</code></td><td><code>{{ inv.order_ref }}</code></td><td>{{ inv.customer.name|default:"—" }}</td><td>{{ inv.total }} MAD</td><td>{{ inv.created_at|date:"Y-m-d" }}</td><td class="actions-cell"><a href="{% url 'invoice-detail' pk=inv.pk %}" class="btn btn-sm">View</a><form method="post" action="{% url 'invoice-delete' pk=inv.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Del</button></form></td></tr>{% empty %}<tr><td colspan="6" class="empty">No invoices.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card">
+  <div class="card-header"><h2>Toutes les Factures</h2><a href="{% url 'invoice-create' %}" class="btn btn-primary" style="margin-left:auto">+ Nouvelle Facture</a></div>
+  <div class="card-body">
+
+    <form method="get" class="filter-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:16px">
+      <div style="flex:2;min-width:180px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Recherche</label>
+        <input type="text" name="q" class="form-control" placeholder="N° facture, client, commande..." value="{{ q }}">
+      </div>
+      <div style="min-width:140px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Date début</label>
+        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+      </div>
+      <div style="min-width:140px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Date fin</label>
+        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+      </div>
+      <div style="min-width:120px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Montant min</label>
+        <input type="number" name="min_amount" class="form-control" step="0.01" placeholder="0.00" value="{{ min_amount }}">
+      </div>
+      <div style="min-width:120px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Montant max</label>
+        <input type="number" name="max_amount" class="form-control" step="0.01" placeholder="0.00" value="{{ max_amount }}">
+      </div>
+      <div style="min-width:120px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Tri</label>
+        <select name="sort" class="form-control">
+          <option value="-created_at" {% if sort == "-created_at" %}selected{% endif %}>Plus récent</option>
+          <option value="created_at" {% if sort == "created_at" %}selected{% endif %}>Plus ancien</option>
+          <option value="ref" {% if sort == "ref" %}selected{% endif %}>N° croissant</option>
+          <option value="-ref" {% if sort == "-ref" %}selected{% endif %}>N° décroissant</option>
+          <option value="-amount" {% if sort == "-amount" %}selected{% endif %}>Montant ↓</option>
+          <option value="amount" {% if sort == "amount" %}selected{% endif %}>Montant ↑</option>
+          <option value="customer" {% if sort == "customer" %}selected{% endif %}>Client A→Z</option>
+          <option value="-customer" {% if sort == "-customer" %}selected{% endif %}>Client Z→A</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+        <a href="{% url 'invoice-list' %}" class="btn">Réinitialiser</a>
+      </div>
+    </form>
+
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">{{ invoices|length }} facture{{ invoices|length|pluralize }}</div>
+
+    <table class="table">
+      <thead><tr>
+        <th>N° Facture</th>
+        <th>Réf. Commande</th>
+        <th>Client</th>
+        <th>Total HT</th>
+        <th>TVA</th>
+        <th>Total TTC</th>
+        <th>Date</th>
+        <th class="actions-cell">Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for inv in invoices %}
+        <tr>
+          <td><code>{{ inv.invoice_ref }}</code></td>
+          <td><code>{{ inv.order_ref }}</code></td>
+          <td>{{ inv.customer_name|default:inv.customer.name|default:"—" }}</td>
+          <td>{{ inv.total_ht|floatformat:2 }} MAD</td>
+          <td>{{ inv.total_vat|floatformat:2 }} MAD</td>
+          <td><strong>{{ inv.total_ttc|floatformat:2 }} MAD</strong></td>
+          <td>{{ inv.created_at|date:"d/m/Y" }}</td>
+          <td class="actions-cell">
+            <a href="{% url 'invoice-detail' pk=inv.pk %}" class="btn btn-sm">Voir</a>
+            <a href="{% url 'invoice-edit' pk=inv.pk %}" class="btn btn-sm">Modifier</a>
+            <form method="post" action="{% url 'invoice-delete' pk=inv.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-danger">Del</button></form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="empty">Aucune facture trouvée.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}

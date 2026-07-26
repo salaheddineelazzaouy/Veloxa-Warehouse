@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}Devis {{ quote.ref }}{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="margin: 0;">DEVIS</h1>
+    <div>
+      {% if quote.status == 'draft' %}
+      <span class="badge badge-muted">Brouillon</span>
+      {% elif quote.status == 'sent' %}
+      <span class="badge badge-warning">Envoyé</span>
+      {% elif quote.status == 'accepted' %}
+      <span class="badge badge-success">Accepté</span>
+      {% elif quote.status == 'rejected' %}
+      <span class="badge badge-danger">Refusé</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="detail-label">Référence</div>
+        <div class="detail-value">{{ quote.ref }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Date</div>
+        <div class="detail-value">{{ quote.date|date:"d/m/Y" }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Validité</div>
+        <div class="detail-value">{{ quote.validity_days }} jours</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Conditions de paiement</div>
+        <div class="detail-value">{{ quote.get_payment_terms_display }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Statut</div>
+        <div class="detail-value">{{ quote.get_status_display }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+  <div class="card">
+    <div class="card-header">Émetteur</div>
+    <div class="card-body">
+      <p><strong>{{ tenant.legal_name|default:tenant.name }}</strong></p>
+      <p>{{ tenant.address }}</p>
+      {% if tenant.ice %}<p>ICE : {{ tenant.ice }}</p>{% endif %}
+      {% if tenant.identifiant_fiscal %}<p>Identifiant fiscal : {{ tenant.identifiant_fiscal }}</p>{% endif %}
+      {% if tenant.registre_commerce %}<p>Registre du commerce : {{ tenant.registre_commerce }}</p>{% endif %}
+      {% if tenant.taxe_professionnelle %}<p>Taxe professionnelle : {{ tenant.taxe_professionnelle }}</p>{% endif %}
+      {% if tenant.capital_social %}<p>Capital social : {{ tenant.capital_social }}</p>{% endif %}
+      {% if tenant.bank_name %}<p>Banque : {{ tenant.bank_name }}</p>{% endif %}
+      {% if tenant.rib %}<p>RIB : {{ tenant.rib }}</p>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">Client</div>
+    <div class="card-body">
+      <p><strong>{{ quote.customer.name }}</strong></p>
+      <p>{{ quote.customer.address }}</p>
+      {% if quote.customer.ice %}<p>ICE : {{ quote.customer.ice }}</p>{% endif %}
+      {% if quote.customer.identifiant_fiscal %}<p>Identifiant fiscal : {{ quote.customer.identifiant_fiscal }}</p>{% endif %}
+      {% if quote.customer.registre_commerce %}<p>Registre du commerce : {{ quote.customer.registre_commerce }}</p>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header">Détail des lignes</div>
+  <div class="card-body" style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+          <th style="padding: 0.5rem;">#</th>
+          <th style="padding: 0.5rem;">Description</th>
+          <th style="padding: 0.5rem; text-align: right;">Qté</th>
+          <th style="padding: 0.5rem; text-align: right;">Prix Unit. HT</th>
+          <th style="padding: 0.5rem; text-align: right;">TVA %</th>
+          <th style="padding: 0.5rem; text-align: right;">Total HT</th>
+          <th style="padding: 0.5rem; text-align: right;">Total TTC</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in quote.lines.all %}
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 0.5rem;">{{ forloop.counter }}</td>
+          <td style="padding: 0.5rem;">{{ line.product.sku }} — {{ line.product.name }}{% if line.description %}<br><small>{{ line.description }}</small>{% endif %}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.qty }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.unit_price }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.vat_rate }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.total_ht }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.total_ttc }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="border-top: 2px solid var(--border); font-weight: bold;">
+          <td colspan="5" style="padding: 0.5rem;"></td>
+          <td style="padding: 0.5rem; text-align: right;">Total HT</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ quote.total_ht }}</td>
+        </tr>
+        <tr style="border-top: 1px solid var(--border);">
+          <td colspan="5" style="padding: 0.5rem;"></td>
+          <td style="padding: 0.5rem; text-align: right;">TVA</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ quote.total_vat }}</td>
+        </tr>
+        <tr style="border-top: 2px solid var(--border); font-weight: bold; font-size: 1.1em;">
+          <td colspan="5" style="padding: 0.5rem;"></td>
+          <td style="padding: 0.5rem; text-align: right;">Total TTC</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ quote.total_ttc }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+{% if quote.amount_in_words %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body">
+    <p><em>Arrêté le présent devis à la somme de : {{ quote.amount_in_words }}</em></p>
+  </div>
+</div>
+{% endif %}
+
+{% if tenant.tax_regime == 'franchise' %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body">
+    <p style="color: var(--text-muted); font-style: italic;">TVA non applicable, article 57 du CGI</p>
+  </div>
+</div>
+{% endif %}
+
+<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+  <button onclick="window.print();" class="btn btn-outline">Imprimer</button>
+  <a href="{% url 'quote-edit' quote.id %}" class="btn btn-primary">Modifier</a>
+  <a href="{% url 'quote-list' %}" class="btn btn-outline">Retour</a>
+
+  {% if quote.status == 'sent' %}
+  <form method="post" action="{% url 'quote-accept' quote.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-success">Marquer Accepté</button>
+  </form>
+  <form method="post" action="{% url 'quote-reject' quote.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Marquer Refusé</button>
+  </form>
+  {% endif %}
+
+  {% if quote.status == 'accepted' %}
+  <form method="post" action="{% url 'quote-convert-to-po' quote.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-success" style="font-weight:600;">Convertir en Bon de Commande</button>
+  </form>
+  {% endif %}
+
+  {% if quote.purchase_orders.all %}
+  <div style="width: 100%; margin-top: 0.5rem;">
+    <strong style="font-size: 0.85em;">BC liés :</strong>
+    {% for po in quote.purchase_orders.all %}
+      <a href="{% url 'po-detail' po.id %}" class="btn btn-sm" style="margin-left:4px;">{{ po.ref }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" action="{% url 'quote-delete' quote.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce devis ?');">Supprimer</button>
+  </form>
+</div>
+{% endblock %}

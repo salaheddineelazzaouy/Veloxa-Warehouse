@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Devis — Veloxa Warehouse{% endblock %}
+{% block page_title %}Devis{% endblock %}
+{% block active %}quotes{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><h2>Devis</h2><a href="{% url 'quote-create' %}" class="btn btn-primary" style="margin-left:auto">+ Nouveau</a></div>
+  <div class="card-body">
+
+    <form method="get" class="filter-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:16px">
+      <div style="flex:2;min-width:180px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Recherche</label>
+        <input type="text" name="q" class="form-control" placeholder="Réf, client..." value="{{ q }}">
+      </div>
+      <div style="min-width:140px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Statut</label>
+        <select name="status" class="form-control">
+          <option value="">Tous</option>
+          <option value="draft" {% if status == "draft" %}selected{% endif %}>Brouillon</option>
+          <option value="sent" {% if status == "sent" %}selected{% endif %}>Envoyé</option>
+          <option value="accepted" {% if status == "accepted" %}selected{% endif %}>Accepté</option>
+          <option value="rejected" {% if status == "rejected" %}selected{% endif %}>Refusé</option>
+          <option value="expired" {% if status == "expired" %}selected{% endif %}>Expiré</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+        <a href="{% url 'quote-list' %}" class="btn">Réinitialiser</a>
+      </div>
+    </form>
+
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">{{ quotes|length }} devis</div>
+
+    <table class="table">
+      <thead><tr>
+        <th>Réf</th>
+        <th>Client</th>
+        <th>Statut</th>
+        <th>Total TTC</th>
+        <th>Date</th>
+        <th class="actions-cell">Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for inv in quotes %}
+        <tr>
+          <td><code>{{ inv.ref }}</code></td>
+          <td>{{ inv.customer_name|default:inv.customer.name|default:"—" }}</td>
+          <td>
+            {% if inv.status == "draft" %}<span class="badge badge-muted">Brouillon</span>
+            {% elif inv.status == "sent" %}<span class="badge badge-warning">Envoyé</span>
+            {% elif inv.status == "accepted" %}<span class="badge badge-success">Accepté</span>
+            {% elif inv.status == "rejected" %}<span class="badge badge-danger">Refusé</span>
+            {% elif inv.status == "expired" %}<span class="badge badge-muted">Expiré</span>
+            {% endif %}
+          </td>
+          <td><strong>{{ inv.total_ttc|floatformat:2 }} MAD</strong></td>
+          <td>{{ inv.created_at|date:"d/m/Y" }}</td>
+          <td class="actions-cell">
+            <a href="{% url 'quote-detail' pk=inv.pk %}" class="btn btn-sm">Voir</a>
+            <a href="{% url 'quote-edit' pk=inv.pk %}" class="btn btn-sm">Modifier</a>
+            <form method="post" action="{% url 'quote-delete' pk=inv.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-danger">Del</button></form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="empty">Aucun document trouvé.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

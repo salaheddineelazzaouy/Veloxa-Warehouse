@@ -1,17 +1,17 @@
 import logging
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Customer
 from ..services import anonymize_customer, create_customer
 from .serializers import CustomerSerializer, CustomerWriteSerializer
+from apps.accounts.permissions import RoleBasedPermission
 
 logger = logging.getLogger(__name__)
 
 
 class CustomerListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -48,8 +48,10 @@ class CustomerListCreateView(generics.ListCreateAPIView):
 
 
 class CustomerDetailView(generics.RetrieveUpdateAPIView):
-    queryset = Customer.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
+
+    def get_queryset(self):
+        return Customer.objects.all()
 
     def get_serializer_class(self):
         if self.request.method in ("PUT", "PATCH"):
@@ -58,7 +60,7 @@ class CustomerDetailView(generics.RetrieveUpdateAPIView):
 
 
 class AnonymizeCustomerView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def post(self, request, pk):
         customer = anonymize_customer(pk, request.user)

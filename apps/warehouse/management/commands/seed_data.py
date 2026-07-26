@@ -10,6 +10,7 @@ from random import randint, uniform, choice, sample
 from faker import Faker
 from apps.warehouse.models import Product, Location, StockMovement, Category, Unit
 from apps.tenants.models import Tenant
+from apps.tenants.utils import bypass_tenant
 from apps.backorder.models import BackOrder
 from apps.crm.models import Customer
 from apps.finance.models import Invoice, InvoiceLine
@@ -27,19 +28,20 @@ class Command(BaseCommand):
     help = "Seed the database with realistic fake data"
 
     def handle(self, *args, **options):
-        self._seed_tenants()
-        self._seed_users()
-        self._seed_locations()
-        self._seed_categories()
-        self._seed_units()
-        self._seed_products()
-        self._seed_customers()
-        self._seed_movements()
-        self._seed_backorders()
-        self._seed_invoices()
-        self._seed_audit_logs()
-        self._seed_landing()
-        self._seed_subscriptions()
+        with bypass_tenant():
+            self._seed_tenants()
+            self._seed_users()
+            self._seed_locations()
+            self._seed_categories()
+            self._seed_units()
+            self._seed_products()
+            self._seed_customers()
+            self._seed_movements()
+            self._seed_backorders()
+            self._seed_invoices()
+            self._seed_audit_logs()
+            self._seed_landing()
+            self._seed_subscriptions()
         self.stdout.write(self.style.SUCCESS("Done. All models seeded."))
 
     def _seed_tenants(self):

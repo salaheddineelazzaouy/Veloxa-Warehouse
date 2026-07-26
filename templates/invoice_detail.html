@@ -1,16 +1,153 @@
-{% extends 'base.html' %}{% block title %}{{ invoice.invoice_ref }} — Invoices{% endblock %}{% block page_title %}Invoice {{ invoice.invoice_ref }}{% endblock %}{% block active %}invoices{% endblock %}
+{% extends 'base.html' %}{% block title %}Facture {{ invoice.invoice_ref }} — Veloxa Warehouse{% endblock %}{% block page_title %}Facture {{ invoice.invoice_ref }}{% endblock %}{% block active %}invoices{% endblock %}
+{% block extra_head %}
+<style>
+  .facture { max-width: 900px; margin: 0 auto; }
+  .facture-header { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .facture-header .issuer, .facture-header .client { padding: 16px; border: 1px solid var(--border); border-radius: 8px; }
+  .facture-header h3 { margin: 0 0 8px 0; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+  .facture-header .field { margin-bottom: 4px; font-size: 13px; }
+  .facture-header .field strong { color: var(--text-primary); }
+  .facture-title { text-align: center; margin: 24px 0 16px; }
+  .facture-title h1 { font-size: 28px; margin: 0; letter-spacing: 2px; }
+  .facture-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; padding: 12px 16px; background: var(--bg-secondary); border-radius: 8px; }
+  .facture-meta .field { font-size: 13px; }
+  .facture-meta .label { color: var(--text-secondary); font-size: 11px; text-transform: uppercase; }
+  .exempt-notice { background: #fef3cd; border: 1px solid #ffc107; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-style: italic; }
+  .facture-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .facture-table th { background: var(--bg-secondary); padding: 10px 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: var(--text-secondary); border-bottom: 2px solid var(--border); }
+  .facture-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .facture-table .text-right { text-align: right; }
+  .facture-totals { display: flex; justify-content: flex-end; margin-bottom: 24px; }
+  .facture-totals table { width: 320px; border-collapse: collapse; }
+  .facture-totals td { padding: 8px 12px; font-size: 14px; }
+  .facture-totals .total-row td { font-weight: 700; font-size: 16px; border-top: 2px solid var(--border); background: var(--bg-secondary); }
+  .facture-words { padding: 12px 16px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 24px; font-size: 13px; font-style: italic; }
+  .facture-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; font-size: 12px; color: var(--text-secondary); }
+  .facture-footer .bank-info { padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+  .facture-footer h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; }
+</style>
+{% endblock %}
 {% block content %}
-<div class="card"><div class="card-header" style="display:flex;justify-content:space-between;align-items:center"><h2>Invoice Details</h2><div class="actions-cell"><form method="post" action="{% url 'invoice-delete' pk=invoice.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Delete</button></form></div></div><div class="card-body"><div class="detail-grid">
-  <div class="detail-field"><div class="detail-label">Invoice Ref</div><div class="detail-value"><code>{{ invoice.invoice_ref }}</code></div></div>
-  <div class="detail-field"><div class="detail-label">Order Ref</div><div class="detail-value"><code>{{ invoice.order_ref }}</code></div></div>
-  <div class="detail-field"><div class="detail-label">Customer</div><div class="detail-value">{{ invoice.customer.name|default:"—" }}</div></div>
-  <div class="detail-field"><div class="detail-label">Total</div><div class="detail-value">{{ invoice.total }} MAD</div></div>
-  <div class="detail-field"><div class="detail-label">Source</div><div class="detail-value">{{ invoice.source }}</div></div>
-  <div class="detail-field"><div class="detail-label">Created By</div><div class="detail-value">{{ invoice.created_by.username }}</div></div>
-  <div class="detail-field"><div class="detail-label">Date</div><div class="detail-value">{{ invoice.created_at|date:"Y-m-d H:i" }}</div></div>
-</div></div></div>
-<div class="card mt-2"><div class="card-header"><h2>Lines</h2></div>
-<div class="card-body">{% if lines %}<table class="table"><thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
-<tbody>{% for line in lines %}<tr><td>{{ line.product.sku }} — {{ line.product.name }}</td><td>{{ line.qty }}</td><td>{{ line.unit_price }} MAD</td><td>{{ line.total }} MAD</td></tr>{% endfor %}</tbody></table>{% else %}<p class="empty">No lines.</p>{% endif %}</div></div>
-<a href="{% url 'invoice-list' %}" class="btn mt-2">&larr; Back to Invoices</a>
+<div class="card facture">
+  <div class="card-body" style="padding:32px">
+    <!-- TITLE -->
+    <div class="facture-title">
+      <h1>FACTURE</h1>
+    </div>
+
+    <!-- META -->
+    <div class="facture-meta">
+      <div class="field"><div class="label">Numéro</div><strong>{{ invoice.invoice_ref }}</strong></div>
+      <div class="field"><div class="label">Date d'Émission</div><strong>{{ invoice.created_at|date:"d/m/Y" }}</strong></div>
+      <div class="field"><div class="label">Référence Commande</div><strong>{{ invoice.order_ref }}</strong></div>
+    </div>
+
+    {% if invoice.vat_exempt_notice %}
+    <div class="exempt-notice">{{ invoice.vat_exempt_notice }}</div>
+    {% endif %}
+
+    <!-- ISSUER / CLIENT -->
+    <div class="facture-header">
+      <div class="issuer">
+        <h3>Émetteur</h3>
+        <div class="field"><strong>{{ tenant.legal_name|default:tenant.name }}</strong></div>
+        {% if tenant.address %}<div class="field">{{ tenant.address }}</div>{% endif %}
+        {% if tenant.ice %}<div class="field"><strong>ICE:</strong> {{ tenant.ice }}</div>{% endif %}
+        {% if tenant.identifiant_fiscal %}<div class="field"><strong>IF:</strong> {{ tenant.identifiant_fiscal }}</div>{% endif %}
+        {% if tenant.registre_commerce %}<div class="field"><strong>RC:</strong> {{ tenant.registre_commerce }}</div>{% endif %}
+        {% if tenant.taxe_professionnelle %}<div class="field"><strong>TP:</strong> {{ tenant.taxe_professionnelle }}</div>{% endif %}
+        {% if tenant.capital_social %}<div class="field">Capital Social: {{ tenant.capital_social }}</div>{% endif %}
+      </div>
+      <div class="client">
+        <h3>Client</h3>
+        {% if invoice.customer %}
+          <div class="field"><strong>{{ invoice.customer_name|default:invoice.customer.name }}</strong></div>
+          {% if invoice.customer_address %}<div class="field">{{ invoice.customer_address }}</div>{% elif invoice.customer.address %}<div class="field">{{ invoice.customer.address }}</div>{% endif %}
+          {% if invoice.customer_ice %}<div class="field"><strong>ICE:</strong> {{ invoice.customer_ice }}</div>{% endif %}
+          {% if invoice.customer_identifiant_fiscal %}<div class="field"><strong>IF:</strong> {{ invoice.customer_identifiant_fiscal }}</div>{% endif %}
+          {% if invoice.customer_registre_commerce %}<div class="field"><strong>RC:</strong> {{ invoice.customer_registre_commerce }}</div>{% endif %}
+          {% if invoice.customer_taxe_professionnelle %}<div class="field"><strong>TP:</strong> {{ invoice.customer_taxe_professionnelle }}</div>{% endif %}
+        {% else %}
+          <div class="field" style="color:var(--text-secondary)">—</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- LINE ITEMS -->
+    <table class="facture-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Description</th>
+          <th>Qté</th>
+          <th class="text-right">Prix Unitaire HT</th>
+          <th class="text-right">TVA</th>
+          <th class="text-right">Total HT</th>
+          <th class="text-right">Total TTC</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in lines %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ line.product.sku }} — {{ line.product.name }}{% if line.description %}<br><small style="color:var(--text-secondary)">{{ line.description }}</small>{% endif %}</td>
+          <td>{{ line.qty }}</td>
+          <td class="text-right">{{ line.unit_price|floatformat:2 }} MAD</td>
+          <td class="text-right">{% widthratio line.vat_rate 1 100 %}%</td>
+          <td class="text-right">{{ line.total_ht|floatformat:2 }} MAD</td>
+          <td class="text-right">{{ line.total_ttc|floatformat:2 }} MAD</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Aucun poste.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- TOTALS -->
+    <div class="facture-totals">
+      <table>
+        <tr><td>Total HT</td><td class="text-right">{{ invoice.total_ht|floatformat:2 }} MAD</td></tr>
+        <tr><td>TVA ({% widthratio invoice.vat_rate 1 100 %}%)</td><td class="text-right">{{ invoice.total_vat|floatformat:2 }} MAD</td></tr>
+        <tr class="total-row"><td>Total TTC</td><td class="text-right">{{ invoice.total_ttc|floatformat:2 }} MAD</td></tr>
+      </table>
+    </div>
+
+    <!-- AMOUNT IN WORDS -->
+    {% if invoice.amount_in_words %}
+    <div class="facture-words">
+      Arrêté la présente facture à la somme de: <strong>{{ invoice.amount_in_words }}</strong>
+    </div>
+    {% endif %}
+
+    <!-- PAYMENT TERMS -->
+    {% if invoice.payment_terms %}
+    <div style="margin-bottom:16px;font-size:13px">
+      <strong>Conditions de paiement:</strong> {{ invoice.payment_terms }}
+      {% if invoice.payment_due_date %} — Échéance: {{ invoice.payment_due_date|date:"d/m/Y" }}{% endif %}
+    </div>
+    {% endif %}
+
+    <!-- FOOTER: BANK + SIGNATURE -->
+    <div class="facture-footer">
+      <div class="bank-info">
+        <h4>Coordonnées Bancaires</h4>
+        {% if tenant.bank_name %}<div>{{ tenant.bank_name }}</div>{% endif %}
+        {% if tenant.rib %}<div>RIB: {{ tenant.rib }}</div>{% endif %}
+        {% if not tenant.bank_name and not tenant.rib %}<div style="color:var(--text-secondary)">Non renseigné</div>{% endif %}
+      </div>
+      <div style="text-align:right">
+        <h4>Signature &amp; Cachet</h4>
+        <div style="margin-top:40px;border-top:1px solid var(--border);width:200px;display:inline-block"></div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div style="margin-top:24px;display:flex;gap:8px">
+      <button onclick="window.print()" class="btn btn-primary">Imprimer</button>
+      <a href="{% url 'invoice-edit' pk=invoice.pk %}" class="btn">Modifier</a>
+      <a href="{% url 'invoice-list' %}" class="btn">&larr; Retour</a>
+      <form method="post" action="{% url 'invoice-delete' pk=invoice.pk %}" style="margin-left:auto">{% csrf_token %}<button class="btn btn-danger" onclick="return confirm('Supprimer cette facture ?')">Supprimer</button></form>
+    </div>
+  </div>
+</div>
 {% endblock %}

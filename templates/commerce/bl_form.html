@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Modifier {{ bl.ref }}{% elif from_po %}BL depuis {{ po.ref }}{% else %}Nouveau BL{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h1 style="margin: 0;">{% if editing %}Modifier {{ bl.ref }}{% elif from_po %}BL depuis {{ po.ref }}{% else %}Nouveau BL{% endif %}</h1>
+    {% if from_po %}
+    <span class="badge badge-success" style="margin-left: 0.5rem;">Depuis BC {{ po.ref }}</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <form method="post" id="bl-form">
+      {% csrf_token %}
+      <input type="hidden" name="editing" value="{{ editing|yesno:'1,0' }}">
+
+      {% if from_po %}
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">Client</label>
+          <input type="text" class="form-control" value="{{ po.customer.name }}" disabled>
+          <input type="hidden" name="customer_id" value="{{ po.customer_id }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date de livraison</label>
+          <input type="date" name="delivery_date" class="form-control" value="{% now 'Y-m-d' %}">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label">Notes</label>
+        <textarea name="notes" class="form-control" rows="2">Livraison partielle/{{ po.ref }}</textarea>
+      </div>
+      {% else %}
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">Client</label>
+          <select name="customer_id" class="form-control" required>
+            <option value="">— Sélectionner un client —</option>
+            {% for c in customers %}
+            <option value="{{ c.id }}" {% if editing and bl.customer_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">BC lié (optionnel)</label>
+          <select name="po_id" class="form-control">
+            <option value="">— Aucun —</option>
+            {% for p in pos %}
+            <option value="{{ p.id }}" {% if editing and bl.po_id == p.id %}selected{% endif %}>{{ p.ref }} — {{ p.customer.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date de livraison</label>
+          <input type="date" name="delivery_date" class="form-control" value="{{ bl.delivery_date|date:'Y-m-d'|default:'' }}">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label">Notes</label>
+        <textarea name="notes" class="form-control" rows="2">{{ bl.notes|default:'' }}</textarea>
+      </div>
+      {% endif %}
+
+      {% if editing %}
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label">Statut</label>
+        <select name="status" class="form-control">
+          <option value="draft" {% if bl.status == 'draft' %}selected{% endif %}>Brouillon</option>
+          <option value="partial" {% if bl.status == 'partial' %}selected{% endif %}>Partiel</option>
+          <option value="delivered" {% if bl.status == 'delivered' %}selected{% endif %}>Livré</option>
+        </select>
+      </div>
+      {% endif %}
+
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <strong>Lignes</strong>
+          {% if not from_po %}
+          <button type="button" class="btn btn-sm btn-outline" onclick="addLine()">+ Ajouter</button>
+          {% endif %}
+        </div>
+        <div class="card-body" style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse;" id="lines-table">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border);">
+                <th style="padding: 0.5rem;">Produit</th>
+                <th style="padding: 0.5rem;">Description</th>
+                <th style="padding: 0.5rem; text-align: right;">Qté Commandée</th>
+                <th style="padding: 0.5rem; text-align: right;">Qté Livrée</th>
+                {% if from_po %}<th style="padding: 0.5rem; text-align: right;">Déjà livré</th>{% endif %}
+                <th style="padding: 0.5rem;"></th>
+              </tr>
+            </thead>
+            <tbody id="lines-body">
+              {% if editing %}
+              {% for line in bl.lines.all %}
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.3rem;">
+                  <select name="line_product[]" class="form-control" required>
+                    <option value="">—</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" {% if line.product_id == p.id %}selected{% endif %}>{{ p.sku }} — {{ p.name }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td style="padding: 0.3rem;"><input type="text" name="line_description[]" class="form-control" value="{{ line.description|default:'' }}"></td>
+                <td style="padding: 0.3rem;"><input type="number" name="line_qty_ordered[]" class="form-control" value="{{ line.qty_ordered }}" min="0" step="1" required style="width: 80px;"></td>
+                <td style="padding: 0.3rem;"><input type="number" name="line_qty_delivered[]" class="form-control" value="{{ line.qty_delivered }}" min="0" step="1" required style="width: 80px;"></td>
+                <td style="padding: 0.3rem;"><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove();">✕</button></td>
+              </tr>
+              {% endfor %}
+              {% elif from_po %}
+              {% for fl in form_lines %}
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.3rem;">
+                  <select name="line_product[]" class="form-control" required>
+                    <option value="">—</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" {% if fl.product_id == p.id %}selected{% endif %}>{{ p.sku }} — {{ p.name }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td style="padding: 0.3rem;"><input type="text" name="line_description[]" class="form-control" value="{{ fl.description|default:'' }}"></td>
+                <td style="padding: 0.3rem;"><input type="number" name="line_qty_ordered[]" class="form-control" value="{{ fl.qty_ordered }}" min="0" step="1" required style="width: 80px;"></td>
+                <td style="padding: 0.3rem;"><input type="number" name="line_qty_delivered[]" class="form-control" value="{{ fl.qty_delivered }}" min="0" max="{{ fl.remaining }}" step="1" required style="width: 80px;"></td>
+                <td style="padding: 0.3rem; text-align: right; font-size: 0.85em; color: var(--text-secondary);">{{ fl.already_delivered }}</td>
+                <td style="padding: 0.3rem;"><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove();">✕</button></td>
+              </tr>
+              {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button type="submit" class="btn btn-primary">{% if editing %}Mettre à jour{% else %}Créer le BL{% endif %}</button>
+        {% if editing %}
+        <a href="{% url 'bl-detail' bl.id %}" class="btn btn-outline">Annuler</a>
+        {% elif from_po %}
+        <a href="{% url 'po-detail' po.id %}" class="btn btn-outline">Annuler</a>
+        {% else %}
+        <a href="{% url 'bl-list' %}" class="btn btn-outline">Annuler</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if not from_po %}
+<script>
+function addLine() {
+  var tbody = document.getElementById('lines-body');
+  var tr = document.createElement('tr');
+  tr.style.borderBottom = '1px solid var(--border)';
+  tr.innerHTML = '<td style="padding:0.3rem;"><select name="line_product[]" class="form-control" required><option value="">—</option>{% for p in products %}<option value="{{ p.id }}">{{ p.sku }} — {{ p.name }}</option>{% endfor %}</select></td>'
+    + '<td style="padding:0.3rem;"><input type="text" name="line_description[]" class="form-control"></td>'
+    + '<td style="padding:0.3rem;"><input type="number" name="line_qty_ordered[]" class="form-control" value="0" min="0" step="1" required style="width:80px;"></td>'
+    + '<td style="padding:0.3rem;"><input type="number" name="line_qty_delivered[]" class="form-control" value="0" min="0" step="1" required style="width:80px;"></td>'
+    + '<td style="padding:0.3rem;"><button type="button" class="btn btn-sm btn-danger" onclick="this.closest(\'tr\').remove();">✕</button></td>';
+  tbody.appendChild(tr);
+}
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}{% block title %}Reservations — Veloxa Warehouse{% endblock %}{% block page_title %}Stock Reservations{% endblock %}{% block active %}reservations{% endblock %}
+{% block content %}
+
+<div class="card">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+    <h2>Active Reservations</h2>
+    <span class="stat-label">{{ reservations|length }} total</span>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead><tr><th>ID</th><th>Product</th><th>Order Ref</th><th>Qty</th><th>Expires</th><th>By</th><th>Created</th><th class="actions-cell">Actions</th></tr></thead>
+      <tbody>
+        {% for r in reservations %}
+        <tr>
+          <td><code>RES-{{ r.id }}</code></td>
+          <td><a href="{% url 'product-detail' pk=r.product_id %}">{{ r.product.sku }}</a></td>
+          <td><code>{{ r.order_ref }}</code></td>
+          <td>{{ r.qty }}</td>
+          <td{% if r.is_expired %} class="text-danger"{% endif %}>{{ r.expires_at|date:"Y-m-d H:i" }}</td>
+          <td>{{ r.created_by.username }}</td>
+          <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+          <td class="actions-cell">
+            <form method="post" action="{% url 'reservation-confirm' pk=r.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-success">Confirm</button></form>
+            <form method="post" action="{% url 'reservation-release' pk=r.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-danger">Release</button></form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="empty">No active reservations.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if past_reservations %}
+<div class="card mt-2">
+  <div class="card-header"><h2>History</h2></div>
+  <div class="card-body">
+    <table class="table">
+      <thead><tr><th>ID</th><th>Product</th><th>Order Ref</th><th>Qty</th><th>Status</th><th>By</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for r in past_reservations %}
+        <tr>
+          <td><code>RES-{{ r.id }}</code></td>
+          <td>{{ r.product.sku }}</td>
+          <td><code>{{ r.order_ref }}</code></td>
+          <td>{{ r.qty }}</td>
+          <td>
+            {% if r.status == 'fulfilled' %}<span class="badge badge-success">Fulfilled</span>
+            {% elif r.status == 'released' %}<span class="badge badge-muted">Released</span>
+            {% elif r.status == 'expired' %}<span class="badge badge-danger">Expired</span>
+            {% else %}<span class="badge">{{ r.status }}</span>{% endif %}
+          </td>
+          <td>{{ r.created_by.username }}</td>
+          <td>{{ r.updated_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

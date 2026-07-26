@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Factures d'Avoir — Veloxa Warehouse{% endblock %}
+{% block page_title %}Factures d'Avoir{% endblock %}
+{% block active %}cn{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><h2>Factures d'Avoir</h2><a href="{% url 'cn-create' %}" class="btn btn-primary" style="margin-left:auto">+ Nouveau</a></div>
+  <div class="card-body">
+
+    <form method="get" class="filter-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:16px">
+      <div style="flex:2;min-width:180px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Recherche</label>
+        <input type="text" name="q" class="form-control" placeholder="Réf, client, facture origine..." value="{{ q }}">
+      </div>
+      <div style="min-width:140px">
+        <label class="form-label" style="font-size:11px;margin-bottom:2px">Statut</label>
+        <select name="status" class="form-control">
+          <option value="">Tous</option>
+          <option value="draft" {% if status == "draft" %}selected{% endif %}>Brouillon</option>
+          <option value="applied" {% if status == "applied" %}selected{% endif %}>Appliquée</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+        <a href="{% url 'cn-list' %}" class="btn">Réinitialiser</a>
+      </div>
+    </form>
+
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">{{ cns|length }} facture{{ cns|length|pluralize }} d'avoir</div>
+
+    <table class="table">
+      <thead><tr>
+        <th>Réf</th>
+        <th>Client</th>
+        <th>Facture Origine</th>
+        <th>Total TTC</th>
+        <th>Date</th>
+        <th class="actions-cell">Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for inv in cns %}
+        <tr>
+          <td><code>{{ inv.ref }}</code></td>
+          <td>{{ inv.customer_name|default:inv.customer.name|default:"—" }}</td>
+          <td><code>{{ inv.original_invoice_ref|default:"—" }}</code></td>
+          <td><strong>{{ inv.total_ttc|floatformat:2 }} MAD</strong></td>
+          <td>{{ inv.created_at|date:"d/m/Y" }}</td>
+          <td class="actions-cell">
+            <a href="{% url 'cn-detail' pk=inv.pk %}" class="btn btn-sm">Voir</a>
+            <a href="{% url 'cn-edit' pk=inv.pk %}" class="btn btn-sm">Modifier</a>
+            <form method="post" action="{% url 'cn-delete' pk=inv.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-danger">Del</button></form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="empty">Aucun document trouvé.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

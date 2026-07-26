@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Modifier {{ po.ref }}{% else %}Nouveau BC{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h1 style="margin: 0;">{% if editing %}Modifier {{ po.ref }}{% else %}Nouveau BC{% endif %}</h1>
+  </div>
+  <div class="card-body">
+    <form method="post" id="po-form">
+      {% csrf_token %}
+      <input type="hidden" name="editing" value="{{ editing|yesno:'1,0' }}">
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">Client</label>
+          <select name="customer_id" class="form-control" required>
+            <option value="">— Sélectionner un client —</option>
+            {% for c in customers %}
+            <option value="{{ c.id }}" {% if editing and po.customer_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Devis lié (optionnel)</label>
+          <select name="quote_id" class="form-control">
+            <option value="">— Aucun —</option>
+            {% for q in quotes %}
+            <option value="{{ q.id }}" {% if editing and po.quote_id == q.id %}selected{% endif %}>{{ q.ref }} — {{ q.customer.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Réf. Client</label>
+          <input type="text" name="customer_po_ref" class="form-control" value="{{ po.customer_po_ref|default:'' }}">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">Conditions de paiement</label>
+          <select name="payment_terms" class="form-control" required>
+            <option value="cash" {% if editing and po.payment_terms == 'cash' %}selected{% endif %}>Comptant</option>
+            <option value="30d" {% if editing and po.payment_terms == '30d' %}selected{% endif %}>30 jours</option>
+            <option value="60d" {% if editing and po.payment_terms == '60d' %}selected{% endif %}>60 jours</option>
+            <option value="90d" {% if editing and po.payment_terms == '90d' %}selected{% endif %}>90 jours</option>
+            <option value="cb" {% if editing and po.payment_terms == 'cb' %}selected{% endif %}>CB</option>
+            <option value="virement" {% if editing and po.payment_terms == 'virement' %}selected{% endif %}>Virement</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea name="notes" class="form-control" rows="1">{{ po.notes|default:'' }}</textarea>
+        </div>
+      </div>
+
+      {% if editing %}
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label">Statut</label>
+        <select name="status" class="form-control">
+          <option value="draft" {% if po.status == 'draft' %}selected{% endif %}>Brouillon</option>
+          <option value="confirmed" {% if po.status == 'confirmed' %}selected{% endif %}>Confirmé</option>
+          <option value="in_progress" {% if po.status == 'in_progress' %}selected{% endif %}>En cours</option>
+          <option value="delivered" {% if po.status == 'delivered' %}selected{% endif %}>Livré</option>
+          <option value="cancelled" {% if po.status == 'cancelled' %}selected{% endif %}>Annulé</option>
+        </select>
+      </div>
+      {% endif %}
+
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <strong>Lignes</strong>
+          <button type="button" class="btn btn-sm btn-outline" onclick="addLine()">+ Ajouter</button>
+        </div>
+        <div class="card-body" style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse;" id="lines-table">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border);">
+                <th style="padding: 0.5rem;">Produit</th>
+                <th style="padding: 0.5rem;">Description</th>
+                <th style="padding: 0.5rem; text-align: right;">Qté</th>
+                <th style="padding: 0.5rem; text-align: right;">Prix Unit. HT</th>
+                <th style="padding: 0.5rem; text-align: right;">TVA %</th>
+                <th style="padding: 0.5rem; text-align: right;">Total HT</th>
+                <th style="padding: 0.5rem; text-align: right;">Total TTC</th>
+                <th style="padding: 0.5rem;"></th>
+              </tr>
+            </thead>
+            <tbody id="lines-body">
+              {% if editing %}
+              {% for line in po.lines.all %}
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.3rem;">
+                  <select name="line_product[]" class="form-control" onchange="wireRow(this)" required>
+                    <option value="">—</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" data-price="{{ p.cost_price }}" {% if line.product_id == p.id %}selected{% endif %}>{{ p.sku }} — {{ p.name }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td style="padding: 0.3rem;"><input type="text" name="line_description[]" class="form-control" value="{{ line.description|default:'' }}"></td>
+                <td style="padding: 0.3rem;"><input type="number" name="line_qty[]" class="form-control" value="{{ line.qty }}" min="0" step="1" onchange="recalc()" oninput="recalc()" required style="width: 70px;"></td>
+                <td style="padding: 0.3rem;"><input type="number" name="line_price[]" class="form-control" value="{{ line.unit_price }}" min="0" step="0.01" onchange="recalc()" oninput="recalc()" required style="width: 100px;"></td>
+                <td style="padding: 0.3rem;">
+                  <select name="line_vat[]" class="form-control" onchange="recalc()" style="width: 70px;">
+                    <option value="20" {% if line.vat_rate == 20 %}selected{% endif %}>20</option>
+                    <option value="14" {% if line.vat_rate == 14 %}selected{% endif %}>14</option>
+                    <option value="10" {% if line.vat_rate == 10 %}selected{% endif %}>10</option>
+                    <option value="7" {% if line.vat_rate == 7 %}selected{% endif %}>7</option>
+                    <option value="0" {% if line.vat_rate == 0 %}selected{% endif %}>0</option>
+                  </select>
+                </td>
+                <td style="padding: 0.3rem; text-align: right;" class="line-ht">{{ line.total_ht }}</td>
+                <td style="padding: 0.3rem; text-align: right;" class="line-ttc">{{ line.total_ttc }}</td>
+                <td style="padding: 0.3rem;"><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove(); recalc();">✕</button></td>
+              </tr>
+              {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-body">
+          <div class="detail-grid" style="justify-content: flex-end;">
+            <div class="detail-field">
+              <div class="detail-label">Total HT</div>
+              <div class="detail-value" id="total-ht">0.00</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">TVA</div>
+              <div class="detail-value" id="total-vat">0.00</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Total TTC</div>
+              <div class="detail-value" id="total-ttc" style="font-size: 1.2em; font-weight: bold;">0.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button type="submit" class="btn btn-primary">{% if editing %}Mettre à jour{% else %}Créer le BC{% endif %}</button>
+        {% if editing %}
+        <a href="{% url 'po-detail' po.id %}" class="btn btn-outline">Annuler</a>
+        {% else %}
+        <a href="{% url 'po-list' %}" class="btn btn-outline">Annuler</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function wireRow(selectEl) {
+  var row = selectEl.closest('tr');
+  var opt = selectEl.options[selectEl.selectedIndex];
+  var priceInput = row.querySelector('input[name="line_price[]"]');
+  if (opt && opt.dataset.price) {
+    priceInput.value = parseFloat(opt.dataset.price).toFixed(2);
+  }
+  recalc();
+}
+
+function recalc() {
+  var rows = document.querySelectorAll('#lines-body tr');
+  var totalHT = 0, totalVAT = 0, totalTTC = 0;
+  rows.forEach(function(row) {
+    var qty = parseFloat(row.querySelector('input[name="line_qty[]"]')?.value) || 0;
+    var price = parseFloat(row.querySelector('input[name="line_price[]"]')?.value) || 0;
+    var vatRate = parseFloat(row.querySelector('select[name="line_vat[]"]')?.value) || 0;
+    var ht = qty * price;
+    var vat = ht * vatRate / 100;
+    var ttc = ht + vat;
+    totalHT += ht;
+    totalVAT += vat;
+    totalTTC += ttc;
+    var htCell = row.querySelector('.line-ht');
+    var ttcCell = row.querySelector('.line-ttc');
+    if (htCell) htCell.textContent = ht.toFixed(2);
+    if (ttcCell) ttcCell.textContent = ttc.toFixed(2);
+  });
+  document.getElementById('total-ht').textContent = totalHT.toFixed(2);
+  document.getElementById('total-vat').textContent = totalVAT.toFixed(2);
+  document.getElementById('total-ttc').textContent = totalTTC.toFixed(2);
+}
+
+function addLine() {
+  var tbody = document.getElementById('lines-body');
+  var tr = document.createElement('tr');
+  tr.style.borderBottom = '1px solid var(--border)';
+  tr.innerHTML = '<td style="padding:0.3rem;"><select name="line_product[]" class="form-control" onchange="wireRow(this)" required><option value="">—</option>{% for p in products %}<option value="{{ p.id }}" data-price="{{ p.cost_price }}">{{ p.sku }} — {{ p.name }}</option>{% endfor %}</select></td>'
+    + '<td style="padding:0.3rem;"><input type="text" name="line_description[]" class="form-control"></td>'
+    + '<td style="padding:0.3rem;"><input type="number" name="line_qty[]" class="form-control" value="1" min="0" step="1" onchange="recalc()" oninput="recalc()" required style="width:70px;"></td>'
+    + '<td style="padding:0.3rem;"><input type="number" name="line_price[]" class="form-control" value="0.00" min="0" step="0.01" onchange="recalc()" oninput="recalc()" required style="width:100px;"></td>'
+    + '<td style="padding:0.3rem;"><select name="line_vat[]" class="form-control" onchange="recalc()" style="width:70px;"><option value="20">20</option><option value="14">14</option><option value="10">10</option><option value="7">7</option><option value="0">0</option></select></td>'
+    + '<td style="padding:0.3rem;text-align:right;" class="line-ht">0.00</td>'
+    + '<td style="padding:0.3rem;text-align:right;" class="line-ttc">0.00</td>'
+    + '<td style="padding:0.3rem;"><button type="button" class="btn btn-sm btn-danger" onclick="this.closest(\'tr\').remove(); recalc();">✕</button></td>';
+  tbody.appendChild(tr);
+}
+
+recalc();
+</script>
+{% endblock %}

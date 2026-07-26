@@ -5,6 +5,7 @@ from random import randint, choice
 from faker import Faker
 from apps.crm.models import Customer
 from apps.tenants.models import Tenant
+from apps.tenants.utils import bypass_tenant
 
 logging.getLogger("faker").setLevel(logging.WARNING)
 fake = Faker(["fr_FR"])
@@ -71,32 +72,33 @@ class Command(BaseCommand):
         parser.add_argument("count", nargs="?", type=int, default=250)
 
     def handle(self, *args, **options):
-        count = options["count"]
+        with bypass_tenant():
+            count = options["count"]
 
-        tenant = Tenant.objects.first()
-        if not tenant:
-            self.stdout.write(self.style.ERROR("No tenant found. Run seed_data first."))
-            return
+            tenant = Tenant.objects.first()
+            if not tenant:
+                self.stdout.write(self.style.ERROR("No tenant found. Run seed_data first."))
+                return
 
-        existing_names = set(Customer.objects.filter(tenant=tenant).values_list("name", flat=True))
+            existing_names = set(Customer.objects.filter(tenant=tenant).values_list("name", flat=True))
 
-        with transaction.atomic():
-            created = 0
-            attempts = 0
-            while created < count and attempts < count * 3:
-                name, ice, if_, tp, rc, phone, email, address, metadata = generate_customer_data()
-                attempts += 1
-                if name in existing_names:
-                    continue
-                Customer.objects.create(
-                    name=name, ice=ice,
-                    identifiant_fiscal=if_, taxe_professionnelle=tp,
-                    registre_commerce=rc,
-                    phone=phone, email=email, address=address,
-                    metadata=metadata,
-                    is_active=True, tenant=tenant,
-                )
-                existing_names.add(name)
-                created += 1
+            with transaction.atomic():
+                created = 0
+                attempts = 0
+                while created < count and attempts < count * 3:
+                    name, ice, if_, tp, rc, phone, email, address, metadata = generate_customer_data()
+                    attempts += 1
+                    if name in existing_names:
+                        continue
+                    Customer.objects.create(
+                        name=name, ice=ice,
+                        identifiant_fiscal=if_, taxe_professionnelle=tp,
+                        registre_commerce=rc,
+                        phone=phone, email=email, address=address,
+                        metadata=metadata,
+                        is_active=True, tenant=tenant,
+                    )
+                    existing_names.add(name)
+                    created += 1
 
-        self.stdout.write(self.style.SUCCESS(f"{created} fake customers created."))
+            self.stdout.write(self.style.SUCCESS(f"{created} fake customers created."))

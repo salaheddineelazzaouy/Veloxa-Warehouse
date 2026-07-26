@@ -32,10 +32,10 @@ urlpatterns = [
     path("api/audit/", include("apps.audit.api.urls")),
     path("api/landing/", include("apps.landing.api.urls")),
     path("api/subscriptions/", include("apps.subscriptions.urls")),
+    path("commerce/", include("apps.commerce.urls")),
     # Template views
     path("login/", views.login_view, name="login"),
     path("signup/", views.signup_view, name="signup"),
-    path("app/", views.app_view, name="app"),
     path("logout/", views.logout_view, name="logout"),
     path("profile/", views.profile_view, name="profile"),
     path("", views.landing, name="landing"),
@@ -55,6 +55,9 @@ urlpatterns = [
     path("landing/lead/", views.landing_lead_create, name="landing-lead-create"),
     path("about/", views.site_page, {"slug": "about"}, name="about"),
     path("legal/", views.site_page, {"slug": "legal"}, name="legal"),
+    path("terms/", views.terms_view, name="terms"),
+    path("privacy/", views.privacy_view, name="privacy"),
+    path("refund-policy/", views.refund_policy_view, name="refund-policy"),
     path("contact/", views.contact_page, name="contact"),
     path("dashboard/", views.dashboard, name="dashboard"),
 
@@ -98,15 +101,24 @@ urlpatterns = [
     path("backorders/<int:pk>/edit/", views.backorder_update, name="backorder-update"),
     path("backorders/<int:pk>/delete/", views.backorder_delete, name="backorder-delete"),
 
-    # Invoice (create / read / delete)
+    # Invoice (create / read / update / delete)
     path("invoices/", views.invoice_list, name="invoice-list"),
     path("invoices/create/", views.invoice_create, name="invoice-create"),
     path("invoices/<int:pk>/", views.invoice_detail, name="invoice-detail"),
+    path("invoices/<int:pk>/edit/", views.invoice_edit, name="invoice-edit"),
     path("invoices/<int:pk>/delete/", views.invoice_delete, name="invoice-delete"),
 
     # AuditLog (read only)
     path("audit-logs/", views.audit_log_list, name="audit-log-list"),
     path("audit-logs/<int:pk>/", views.audit_log_detail, name="audit-log-detail"),
+
+    # Stock Reservations
+    path("reservations/", views.reservation_list, name="reservation-list"),
+    path("reservations/<int:pk>/confirm/", views.reservation_confirm, name="reservation-confirm"),
+    path("reservations/<int:pk>/release/", views.reservation_release, name="reservation-release"),
+
+    # RBAC Management (super_admin only)
+    path("rbac/manage/", views.rbac_manage, name="rbac-manage"),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

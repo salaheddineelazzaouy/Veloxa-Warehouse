@@ -11,4 +11,8 @@ urlpatterns = [
     path("reconcile/", views.ReconcileView.as_view(), name="reconcile"),
     path("movements/", views.MovementListView.as_view(), name="movement-list"),
     path("dashboard/", views.DashboardStatsView.as_view(), name="dashboard-stats"),
+    path("reservations/", views.ReservationListView.as_view(), name="reservation-list"),
+    path("reservations/create/", views.ReserveView.as_view(), name="reservation-create"),
+    path("reservations/<int:pk>/confirm/", views.ConfirmReservationView.as_view(), name="reservation-confirm"),
+    path("reservations/<int:pk>/release/", views.ReleaseReservationView.as_view(), name="reservation-release"),
 ]

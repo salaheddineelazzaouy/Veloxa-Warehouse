@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}RBAC Manager — Veloxa Warehouse{% endblock %}
+{% block page_title %}RBAC Manager{% endblock %}
+{% block active %}rbac{% endblock %}
+
+{% block content %}
+
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+  <div style="flex:1;min-width:140px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;text-align:center">
+    <div style="font-size:24px;font-weight:700;color:var(--accent)">{{ role_counts.super_admin }}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Super Admin</div>
+  </div>
+  <div style="flex:1;min-width:140px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;text-align:center">
+    <div style="font-size:24px;font-weight:700;color:#22c55e">{{ role_counts.warehouse_manager }}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Warehouse Mgr</div>
+  </div>
+  <div style="flex:1;min-width:140px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;text-align:center">
+    <div style="font-size:24px;font-weight:700;color:#f59e0b">{{ role_counts.auditor }}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Auditor</div>
+  </div>
+  <div style="flex:1;min-width:140px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;text-align:center">
+    <div style="font-size:24px;font-weight:700;color:var(--text-muted)">{{ role_counts.viewer }}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Viewer</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>All Users</h2></div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Tenant</th>
+          <th>Joined</th>
+          <th>Status</th>
+          <th style="text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for u in users %}
+        <tr style="{% if not u.is_active %}opacity:0.5{% endif %}">
+          <td>
+            <div style="font-weight:500">{{ u.username }}</div>
+            <div style="font-size:12px;color:var(--text-muted)">{{ u.get_full_name|default:"—" }}</div>
+          </td>
+          <td style="color:var(--text-secondary)">{{ u.email|default:"—" }}</td>
+          <td style="color:var(--text-secondary)">{{ u.tenant|default:"—" }}</td>
+          <td style="color:var(--text-secondary);font-size:13px">{{ u.date_joined|date:"Y-m-d" }}</td>
+          <td>
+            {% if u.is_active %}
+              <span class="badge badge-success">Active</span>
+            {% else %}
+              <span class="badge badge-muted">Disabled</span>
+            {% endif %}
+          </td>
+          <td style="text-align:right">
+            {% if u.pk != request.user.pk %}
+            <form method="post" style="display:inline">
+              {% csrf_token %}
+              <input type="hidden" name="user_id" value="{{ u.pk }}">
+              <input type="hidden" name="action" value="change_role">
+              <select name="role" onchange="this.form.submit()" style="background:var(--bg-input);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:13px;cursor:pointer">
+                {% for code, label in role_choices %}
+                <option value="{{ code }}" {% if u.role == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </form>
+            <form method="post" style="display:inline;margin-left:6px">
+              {% csrf_token %}
+              <input type="hidden" name="user_id" value="{{ u.pk }}">
+              <input type="hidden" name="action" value="toggle_active">
+              {% if u.is_active %}
+                <button type="submit" class="btn btn-sm btn-danger" title="Disable user">Disable</button>
+              {% else %}
+                <button type="submit" class="btn btn-sm btn-primary" title="Enable user">Enable</button>
+              {% endif %}
+            </form>
+            {% else %}
+              <span style="font-size:12px;color:var(--text-muted)">You</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="empty">No users found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mt-2">
+  <div class="card-header"><h2>Role Hierarchy</h2></div>
+  <div class="card-body" style="display:flex;gap:16px;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--accent)">Super Admin</div>
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">Full system access. Can manage users, roles, landing page, and all data.</div>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#22c55e">Warehouse Manager</div>
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">Can create/edit/delete products, locations, movements, customers, invoices, backorders.</div>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#f59e0b">Auditor</div>
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">Read-only access to all data including audit logs.</div>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-muted)">Viewer</div>
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">Basic read-only access to inventory and orders. Default for new registrations.</div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

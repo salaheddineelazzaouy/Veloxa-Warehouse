@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404
 from django.contrib.auth import get_user_model, authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from config.decorators import role_required, WRITE_ROLES, ADMIN_ROLES
 from django.contrib.auth.forms import PasswordChangeForm
 from django.db.models import Sum
 from django.db.models.deletion import ProtectedError
 from django.contrib import messages
-from apps.warehouse.models import Product, Location, StockMovement, Category, Unit
+from apps.warehouse.models import Product, Location, StockMovement, Category, Unit, StockReservation
 from apps.backorder.models import BackOrder
 from apps.crm.models import Customer
 from apps.finance.models import Invoice
@@ -13,6 +15,26 @@ from apps.audit.models import AuditLog
 from apps.landing.models import HeroSection, Feature, TrustCard, PricingPlan, ComplianceSection, CTASection, LandingLead, SitePage
 
 User = get_user_model()
+
+
+def _get_tenant_object_or_404(qs, pk, user):
+    if not hasattr(qs, "filter"):
+        qs = qs.objects.all()
+    if user.is_superuser:
+        return get_object_or_404(qs, pk=pk)
+    return get_object_or_404(qs.filter(tenant=user.tenant), pk=pk)
+
+
+def terms_view(request):
+    return render(request, "terms.html")
+
+
+def privacy_view(request):
+    return render(request, "privacy.html")
+
+
+def refund_policy_view(request):
+    return render(request, "refund_policy.html")
 
 
 def landing(request):
@@ -47,17 +69,6 @@ def signup_view(request):
         return redirect("dashboard")
     return render(request, "signup.html")
 
-
-def app_view(request):
-    import os
-    from django.http import HttpResponse
-    from django.conf import settings
-    index_path = settings.BASE_DIR.parent / "frontend" / "dist" / "index.html"
-    if os.path.exists(index_path):
-        with open(index_path, "r", encoding="utf-8") as f:
-            html = f.read()
-        return HttpResponse(html)
-    return render(request, "app.html")
 
 
 @login_required
@@ -103,6 +114,8 @@ def dashboard(request):
     from apps.subscriptions.models import Subscription
 
     sub = Subscription.objects.filter(user=request.user).order_by('-created_at').first()
+    active_reservations = StockReservation.objects.filter(status="active")
+    reserved_total = active_reservations.aggregate(s=Sum("qty"))["s"] or 0
     stats = {
         "products": Product.objects.count(),
         "locations": Location.objects.count(),
@@ -113,8 +126,10 @@ def dashboard(request):
         "invoices": Invoice.objects.count(),
         "audit_logs": AuditLog.objects.count(),
         "users": User.objects.count(),
+        "reserved": reserved_total,
+        "active_reservations": active_reservations.count(),
     }
-    return render(request, "dashboard.html", {"stats": stats, "subscription": sub})
+    return render(request, "dashboard.html", {"stats": stats, "subscription": sub, "tenant": request.user.tenant})
 
 # ────────────────────────────── Category ──────────────────────────────
 
@@ -125,13 +140,14 @@ def category_list(request):
 @login_required
 def category_detail(request, pk):
     from django.db.models import Sum
-    cat = get_object_or_404(Category, pk=pk)
+    cat = _get_tenant_object_or_404(Category, pk, request.user)
     products = Product.objects.filter(category=cat).select_related("unit")
     for p in products:
         p.net_stock = StockMovement.objects.filter(product=p).aggregate(Sum("qty"))["qty__sum"] or 0
     return render(request, "category_detail.html", {"category": cat, "products": products})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def category_create(request):
     if request.method == "POST":
         Category.objects.create(
@@ -145,8 +161,9 @@ def category_create(request):
     return render(request, "category_form.html", {"category": None})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def category_update(request, pk):
-    cat = get_object_or_404(Category, pk=pk)
+    cat = _get_tenant_object_or_404(Category, pk, request.user)
     if request.method == "POST":
         cat.name = request.POST["name"]
         cat.description = request.POST.get("description", "")
@@ -157,8 +174,9 @@ def category_update(request, pk):
     return render(request, "category_form.html", {"category": cat})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def category_delete(request, pk):
-    cat = get_object_or_404(Category, pk=pk)
+    cat = _get_tenant_object_or_404(Category, pk, request.user)
     if request.method == "POST":
         try:
             cat.delete()
@@ -174,16 +192,31 @@ def category_delete(request, pk):
 
 @login_required
 def product_list(request):
-    return render(request, "products.html", {"products": Product.objects.all()})
+    products = Product.objects.all().select_related("category", "unit")
+    for p in products:
+        p.stock_qty = StockMovement.objects.filter(product=p).aggregate(Sum("qty"))["qty__sum"] or 0
+        p.reserved_qty = StockReservation.objects.filter(product=p, status="active").aggregate(Sum("qty"))["qty__sum"] or 0
+        p.available_qty = p.stock_qty - p.reserved_qty
+    return render(request, "products.html", {"products": products})
 
 @login_required
 def product_detail(request, pk):
-    product = get_object_or_404(Product, pk=pk)
+    product = _get_tenant_object_or_404(Product, pk, request.user)
     movements = StockMovement.objects.filter(product=product).select_related("location", "created_by")
     net = movements.aggregate(Sum("qty"))["qty__sum"] or 0
-    return render(request, "product_detail.html", {"product": product, "movements": movements, "net_stock": net})
+    reserved = StockReservation.objects.filter(product=product, status="active").aggregate(Sum("qty"))["qty__sum"] or 0
+    active_res = StockReservation.objects.filter(product=product, status="active").select_related("created_by").order_by("-created_at")
+    return render(request, "product_detail.html", {
+        "product": product,
+        "movements": movements,
+        "net_stock": net,
+        "available_stock": net - reserved,
+        "reserved_qty": reserved,
+        "active_reservations": active_res,
+    })
 
 @login_required
+@role_required(*WRITE_ROLES)
 def product_create(request):
     if request.method == "POST":
         cat_id = request.POST.get("category") or None
@@ -205,8 +238,9 @@ def product_create(request):
     })
 
 @login_required
+@role_required(*WRITE_ROLES)
 def product_update(request, pk):
-    product = get_object_or_404(Product, pk=pk)
+    product = _get_tenant_object_or_404(Product, pk, request.user)
     if request.method == "POST":
         cat_id = request.POST.get("category") or None
         unit_id = request.POST.get("unit") or None
@@ -227,8 +261,9 @@ def product_update(request, pk):
     })
 
 @login_required
+@role_required(*WRITE_ROLES)
 def product_delete(request, pk):
-    product = get_object_or_404(Product, pk=pk)
+    product = _get_tenant_object_or_404(Product, pk, request.user)
     if request.method == "POST":
         try:
             product.delete()
@@ -249,10 +284,11 @@ def location_list(request):
 
 @login_required
 def location_detail(request, pk):
-    location = get_object_or_404(Location, pk=pk)
+    location = _get_tenant_object_or_404(Location, pk, request.user)
     return render(request, "location_detail.html", {"location": location})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def location_create(request):
     if request.method == "POST":
         Location.objects.create(
@@ -265,8 +301,9 @@ def location_create(request):
     return render(request, "location_form.html", {"location": None})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def location_update(request, pk):
-    location = get_object_or_404(Location, pk=pk)
+    location = _get_tenant_object_or_404(Location, pk, request.user)
     if request.method == "POST":
         location.code = request.POST["code"]
         location.name = request.POST["name"]
@@ -277,8 +314,9 @@ def location_update(request, pk):
     return render(request, "location_form.html", {"location": location})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def location_delete(request, pk):
-    location = get_object_or_404(Location, pk=pk)
+    location = _get_tenant_object_or_404(Location, pk, request.user)
     if request.method == "POST":
         try:
             location.delete()
@@ -298,13 +336,14 @@ def movement_list(request):
 
 @login_required
 def movement_detail(request, pk):
-    m = get_object_or_404(StockMovement.objects.select_related("product", "location", "created_by"), pk=pk)
+    m = _get_tenant_object_or_404(StockMovement.objects.select_related("product", "location", "created_by"), pk, request.user)
     return render(request, "movement_detail.html", {"movement": m})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def movement_create(request):
     if request.method == "POST":
-        product = get_object_or_404(Product, pk=request.POST["product"])
+        product = _get_tenant_object_or_404(Product, int(request.POST["product"]), request.user)
         qty = int(request.POST["qty"])
         mtype = request.POST["type"]
         if mtype == "outbound" and qty > 0:
@@ -324,6 +363,40 @@ def movement_create(request):
     locations = Location.objects.filter(is_active=True)
     return render(request, "movement_form.html", {"products": products, "locations": locations})
 
+# ────────────────────────────── Reservations ──────────────────────────────
+
+@login_required
+def reservation_list(request):
+    active = StockReservation.objects.filter(status="active").select_related("product", "created_by").order_by("-created_at")
+    past = StockReservation.objects.exclude(status="active").select_related("product", "created_by").order_by("-updated_at")[:50]
+    return render(request, "reservations.html", {"reservations": active, "past_reservations": past})
+
+@login_required
+@role_required(*WRITE_ROLES)
+def reservation_confirm(request, pk):
+    if request.method != "POST":
+        return redirect("reservation-list")
+    from apps.warehouse.services.reservation import confirm_reservation
+    try:
+        result = confirm_reservation(reservation_id=pk, user=request.user)
+        messages.success(request, f"Reservation RES-{pk} confirmed — outbound movement created.")
+    except Exception as e:
+        messages.error(request, f"Cannot confirm: {e}")
+    return redirect("reservation-list")
+
+@login_required
+@role_required(*WRITE_ROLES)
+def reservation_release(request, pk):
+    if request.method != "POST":
+        return redirect("reservation-list")
+    from apps.warehouse.services.reservation import release_reservation
+    try:
+        release_reservation(reservation_id=pk, user=request.user, reason="Released from template view")
+        messages.success(request, f"Reservation RES-{pk} released.")
+    except Exception as e:
+        messages.error(request, f"Cannot release: {e}")
+    return redirect("reservation-list")
+
 # ────────────────────────────── Customer ──────────────────────────────
 
 @login_required
@@ -335,7 +408,7 @@ def customer_detail(request, pk):
     from django.db.models import Sum, Count
     from decimal import Decimal
     from apps.finance.models import Invoice
-    customer = get_object_or_404(Customer, pk=pk)
+    customer = _get_tenant_object_or_404(Customer, pk, request.user)
     invoices = Invoice.objects.filter(customer=customer).select_related("created_by").order_by("-created_at")
     invoice_count = invoices.count()
     agg = invoices.aggregate(total=Sum("total"))
@@ -350,6 +423,7 @@ def customer_detail(request, pk):
     })
 
 @login_required
+@role_required(*WRITE_ROLES)
 def customer_create(request):
     if request.method == "POST":
         Customer.objects.create(
@@ -364,8 +438,9 @@ def customer_create(request):
     return render(request, "customer_form.html", {"customer": None})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def customer_update(request, pk):
-    customer = get_object_or_404(Customer, pk=pk)
+    customer = _get_tenant_object_or_404(Customer, pk, request.user)
     if request.method == "POST":
         customer.name = request.POST["name"]
         customer.phone = request.POST.get("phone", "")
@@ -379,8 +454,9 @@ def customer_update(request, pk):
     return render(request, "customer_form.html", {"customer": customer})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def customer_delete(request, pk):
-    customer = get_object_or_404(Customer, pk=pk)
+    customer = _get_tenant_object_or_404(Customer, pk, request.user)
     if request.method == "POST":
         try:
             customer.delete()
@@ -428,10 +504,11 @@ def backorder_list(request):
 
 @login_required
 def backorder_detail(request, pk):
-    bo = get_object_or_404(BackOrder.objects.select_related("product", "created_by"), pk=pk)
+    bo = _get_tenant_object_or_404(BackOrder.objects.select_related("product", "created_by"), pk, request.user)
     return render(request, "backorder_detail.html", {"backorder": bo})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def backorder_create(request):
     if request.method == "POST":
         BackOrder.objects.create(
@@ -446,8 +523,9 @@ def backorder_create(request):
     return render(request, "backorder_form.html", {"backorder": None, "products": products})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def backorder_update(request, pk):
-    bo = get_object_or_404(BackOrder, pk=pk)
+    bo = _get_tenant_object_or_404(BackOrder, pk, request.user)
     if request.method == "POST":
         bo.qty = request.POST["qty"]
         bo.sales_order_ref = request.POST.get("sales_order_ref", "")
@@ -458,8 +536,9 @@ def backorder_update(request, pk):
     return render(request, "backorder_form.html", {"backorder": bo, "products": products})
 
 @login_required
+@role_required(*WRITE_ROLES)
 def backorder_delete(request, pk):
-    bo = get_object_or_404(BackOrder, pk=pk)
+    bo = _get_tenant_object_or_404(BackOrder, pk, request.user)
     if request.method == "POST":
         try:
             bo.delete()
@@ -474,29 +553,42 @@ def backorder_delete(request, pk):
 # ────────────────────────────── Invoice ──────────────────────────────
 
 @login_required
+@role_required(*WRITE_ROLES)
 def invoice_create(request):
     from apps.finance.services import create_invoice
     customers = Customer.objects.all()
     products = Product.objects.filter(is_active=True)
+    tenant = request.user.tenant
     if request.method == "POST":
         order_ref = request.POST["order_ref"]
         customer_id = request.POST.get("customer_id") or None
+        payment_terms = request.POST.get("payment_terms", "30 jours")
+        payment_due_date = request.POST.get("payment_due_date") or None
+        default_vat = request.POST.get("default_vat_rate", "20")
         product_ids = request.POST.getlist("product_id[]")
         qtys = request.POST.getlist("qty[]")
         prices = request.POST.getlist("unit_price[]")
+        vat_rates = request.POST.getlist("vat_rate[]")
         lines = []
-        for pid, qty, price in zip(product_ids, qtys, prices):
+        for pid, qty, price, vr in zip(product_ids, qtys, prices, vat_rates):
             if pid and qty and price:
                 lines.append({
                     "product_id": int(pid),
-                    "qty": int(qty),
+                    "qty": qty,
                     "unit_price": price,
+                    "vat_rate": vr if vr else default_vat,
                 })
         if not lines:
             messages.error(request, "Add at least one line item.")
         else:
             try:
-                create_invoice(order_ref, lines, request.user, customer_id, tenant=request.user.tenant)
+                from datetime import date
+                due = date.fromisoformat(payment_due_date) if payment_due_date else None
+                create_invoice(
+                    order_ref, lines, request.user, customer_id,
+                    tenant=tenant, vat_rate=default_vat,
+                    payment_terms=payment_terms, payment_due_date=due,
+                )
                 messages.success(request, "Invoice created.")
                 return redirect("invoice-list")
             except Exception as e:
@@ -504,21 +596,140 @@ def invoice_create(request):
     return render(request, "invoice_form.html", {
         "customers": customers,
         "products": products,
+        "tenant": tenant,
     })
 
 @login_required
 def invoice_list(request):
-    return render(request, "invoices.html", {"invoices": Invoice.objects.select_related("customer", "created_by").all()})
+    qs = Invoice.objects.select_related("customer", "created_by").all()
+
+    q = request.GET.get("q", "").strip()
+    if q:
+        from django.db.models import Q
+        qs = qs.filter(
+            Q(invoice_ref__icontains=q) |
+            Q(order_ref__icontains=q) |
+            Q(customer_name__icontains=q) |
+            Q(customer__name__icontains=q)
+        )
+
+    status_filter = request.GET.get("status", "")
+    if status_filter == "paid":
+        pass
+    elif status_filter == "unpaid":
+        qs = qs.filter(total_ttc__gt=0)
+
+    date_from = request.GET.get("date_from", "")
+    date_to = request.GET.get("date_to", "")
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
+
+    min_amount = request.GET.get("min_amount", "")
+    max_amount = request.GET.get("max_amount", "")
+    if min_amount:
+        qs = qs.filter(total_ttc__gte=min_amount)
+    if max_amount:
+        qs = qs.filter(total_ttc__lte=max_amount)
+
+    sort = request.GET.get("sort", "-created_at")
+    allowed_sorts = {
+        "date": "created_at",
+        "-date": "-created_at",
+        "ref": "invoice_ref",
+        "-ref": "-invoice_ref",
+        "amount": "total_ttc",
+        "-amount": "-total_ttc",
+        "customer": "customer_name",
+        "-customer": "-customer_name",
+    }
+    qs = qs.order_by(allowed_sorts.get(sort, "-created_at"))
+
+    return render(request, "invoices.html", {
+        "invoices": qs,
+        "q": q,
+        "status_filter": status_filter,
+        "date_from": date_from,
+        "date_to": date_to,
+        "min_amount": min_amount,
+        "max_amount": max_amount,
+        "sort": sort,
+    })
 
 @login_required
 def invoice_detail(request, pk):
-    inv = get_object_or_404(Invoice.objects.select_related("customer", "created_by"), pk=pk)
+    inv = _get_tenant_object_or_404(Invoice.objects.select_related("customer", "created_by"), pk, request.user)
     lines = inv.lines.select_related("product").all()
-    return render(request, "invoice_detail.html", {"invoice": inv, "lines": lines})
+    return render(request, "invoice_detail.html", {
+        "invoice": inv, "lines": lines, "tenant": request.user.tenant,
+    })
 
 @login_required
+@role_required(*WRITE_ROLES)
+def invoice_edit(request, pk):
+    from apps.finance.services import update_invoice
+    inv = _get_tenant_object_or_404(Invoice.objects.select_related("customer"), pk, request.user)
+    customers = Customer.objects.all()
+    products = Product.objects.filter(is_active=True)
+    existing_lines = inv.lines.select_related("product").all()
+    tenant = request.user.tenant
+
+    if request.method == "POST":
+        invoice_ref = request.POST.get("invoice_ref", inv.invoice_ref).strip()
+        order_ref = request.POST.get("order_ref", inv.order_ref).strip()
+        customer_id = request.POST.get("customer_id") or None
+        payment_terms = request.POST.get("payment_terms", inv.payment_terms)
+        payment_due_date = request.POST.get("payment_due_date") or None
+        default_vat = request.POST.get("default_vat_rate", "20")
+
+        product_ids = request.POST.getlist("product_id[]")
+        qtys = request.POST.getlist("qty[]")
+        prices = request.POST.getlist("unit_price[]")
+        vat_rates = request.POST.getlist("vat_rate[]")
+
+        lines = []
+        for pid, qty, price, vr in zip(product_ids, qtys, prices, vat_rates):
+            if pid and qty and price:
+                lines.append({
+                    "product_id": int(pid),
+                    "qty": qty,
+                    "unit_price": price,
+                    "vat_rate": vr if vr else default_vat,
+                })
+
+        if not lines:
+            messages.error(request, "Add at least one line item.")
+        else:
+            try:
+                from datetime import date as date_cls
+                due = date_cls.fromisoformat(payment_due_date) if payment_due_date else None
+                update_invoice(
+                    inv.id, order_ref=order_ref, customer_id=customer_id,
+                    lines=lines, user=request.user,
+                    vat_rate=default_vat, payment_terms=payment_terms,
+                    payment_due_date=due,
+                )
+                if invoice_ref != inv.invoice_ref:
+                    Invoice.objects.filter(pk=inv.pk).update(invoice_ref=invoice_ref)
+                messages.success(request, "Facture mise à jour.")
+                return redirect("invoice-detail", pk=inv.pk)
+            except Exception as e:
+                messages.error(request, f"Erreur: {e}")
+
+    return render(request, "invoice_form.html", {
+        "customers": customers,
+        "products": products,
+        "tenant": tenant,
+        "invoice": inv,
+        "existing_lines": existing_lines,
+        "editing": True,
+    })
+
+@login_required
+@role_required(*WRITE_ROLES)
 def invoice_delete(request, pk):
-    inv = get_object_or_404(Invoice, pk=pk)
+    inv = _get_tenant_object_or_404(Invoice, pk, request.user)
     if request.method == "POST":
         try:
             inv.delete()
@@ -538,13 +749,14 @@ def audit_log_list(request):
 
 @login_required
 def audit_log_detail(request, pk):
-    log = get_object_or_404(AuditLog.objects.select_related("user"), pk=pk)
+    log = _get_tenant_object_or_404(AuditLog.objects.select_related("user"), pk, request.user)
     return render(request, "audit_log_detail.html", {"log": log})
 
 
 # ────────────────────────────── Landing Content Management ──────────────────────────────
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_manage(request):
     if request.method == "POST":
         section = request.POST.get("_section", "")
@@ -584,6 +796,7 @@ def landing_manage(request):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_feature_create(request):
     if request.method == "POST":
         Feature.objects.create(
@@ -607,6 +820,7 @@ def landing_feature_create(request):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_feature_update(request, pk):
     obj = get_object_or_404(Feature, pk=pk)
     if request.method == "POST":
@@ -630,6 +844,7 @@ def landing_feature_update(request, pk):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_feature_delete(request, pk):
     obj = get_object_or_404(Feature, pk=pk)
     if request.method == "POST":
@@ -639,6 +854,7 @@ def landing_feature_delete(request, pk):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_trust_create(request):
     if request.method == "POST":
         TrustCard.objects.create(
@@ -660,6 +876,7 @@ def landing_trust_create(request):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_trust_update(request, pk):
     obj = get_object_or_404(TrustCard, pk=pk)
     if request.method == "POST":
@@ -681,6 +898,7 @@ def landing_trust_update(request, pk):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_trust_delete(request, pk):
     obj = get_object_or_404(TrustCard, pk=pk)
     if request.method == "POST":
@@ -690,6 +908,7 @@ def landing_trust_delete(request, pk):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_pricing_create(request):
     if request.method == "POST":
         PricingPlan.objects.create(
@@ -717,6 +936,7 @@ def landing_pricing_create(request):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_pricing_update(request, pk):
     obj = get_object_or_404(PricingPlan, pk=pk)
     if request.method == "POST":
@@ -744,6 +964,7 @@ def landing_pricing_update(request, pk):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_pricing_delete(request, pk):
     obj = get_object_or_404(PricingPlan, pk=pk)
     if request.method == "POST":
@@ -753,6 +974,7 @@ def landing_pricing_delete(request, pk):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_page_create(request):
     if request.method == "POST":
         SitePage.objects.create(
@@ -770,6 +992,7 @@ def landing_page_create(request):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_page_update(request, pk):
     obj = get_object_or_404(SitePage, pk=pk)
     if request.method == "POST":
@@ -787,6 +1010,7 @@ def landing_page_update(request, pk):
 
 
 @login_required
+@role_required(*ADMIN_ROLES)
 def landing_page_delete(request, pk):
     obj = get_object_or_404(SitePage, pk=pk)
     if request.method == "POST":
@@ -817,3 +1041,45 @@ def site_page(request, slug):
 
 def contact_page(request):
     return render(request, "contact.html")
+
+
+# ────────────────────────────── RBAC Management ──────────────────────────────
+
+@login_required
+@role_required("super_admin")
+def rbac_manage(request):
+    users = User.objects.select_related("tenant").all().order_by("-date_joined")
+    role_counts = {}
+    for role_code, _ in User.ROLE_CHOICES:
+        role_counts[role_code] = users.filter(role=role_code).count()
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        action = request.POST.get("action")
+        target = User.objects.filter(pk=user_id).first()
+        if not target:
+            messages.error(request, "User not found.")
+            return redirect("rbac-manage")
+        if target.pk == request.user.pk:
+            messages.error(request, "You cannot change your own role.")
+            return redirect("rbac-manage")
+        if action == "change_role":
+            new_role = request.POST.get("role", "")
+            valid_roles = dict(User.ROLE_CHOICES)
+            if new_role in valid_roles:
+                old_role = target.role
+                target.role = new_role
+                target.save(update_fields=["role"])
+                messages.success(request, f"{target.username}: {old_role} → {new_role}")
+            else:
+                messages.error(request, "Invalid role.")
+        elif action == "toggle_active":
+            target.is_active = not target.is_active
+            target.save(update_fields=["is_active"])
+            status_label = "activated" if target.is_active else "deactivated"
+            messages.success(request, f"{target.username} has been {status_label}.")
+        return redirect("rbac-manage")
+    return render(request, "rbac_manage.html", {
+        "users": users,
+        "role_counts": role_counts,
+        "role_choices": User.ROLE_CHOICES,
+    })

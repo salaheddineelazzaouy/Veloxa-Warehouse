@@ -1,18 +1,18 @@
 import logging
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Invoice
 from ..services import create_invoice, update_invoice, delete_invoice, calculate_cogs
 from .serializers import InvoiceSerializer, InvoiceCreateSerializer
+from apps.accounts.permissions import RoleBasedPermission
 
 logger = logging.getLogger(__name__)
 
 
 class InvoiceListView(generics.ListAPIView):
     serializer_class = InvoiceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def get_queryset(self):
         qs = Invoice.objects.prefetch_related("lines").all()
@@ -24,25 +24,31 @@ class InvoiceListView(generics.ListAPIView):
 
 class InvoiceCreateView(generics.GenericAPIView):
     serializer_class = InvoiceCreateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
         invoice = create_invoice(
-            order_ref=serializer.validated_data["order_ref"],
-            lines=serializer.validated_data["lines"],
+            order_ref=data["order_ref"],
+            lines=data["lines"],
             user=request.user,
-            customer_id=serializer.validated_data.get("customer_id"),
+            customer_id=data.get("customer_id"),
             tenant=request.user.tenant,
+            vat_rate=data.get("vat_rate"),
+            payment_terms=data.get("payment_terms", "30 jours"),
+            payment_due_date=data.get("payment_due_date"),
         )
         return Response(InvoiceSerializer(invoice).data, status=status.HTTP_201_CREATED)
 
 
 class InvoiceDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Invoice.objects.prefetch_related("lines__product").all()
     serializer_class = InvoiceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
+
+    def get_queryset(self):
+        return Invoice.objects.prefetch_related("lines__product").all()
 
     def update(self, request, *args, **kwargs):
         invoice = self.get_object()
@@ -64,7 +70,7 @@ class InvoiceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class COGSView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedPermission]
 
     def get(self, request, product_id):
         cogs = calculate_cogs(product_id)

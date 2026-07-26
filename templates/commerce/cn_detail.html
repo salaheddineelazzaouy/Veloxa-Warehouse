@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Avoir {{ cn.ref }}{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="margin: 0;">FACTURE D'AVOIR</h1>
+    <div>
+      {% if cn.status == 'draft' %}
+      <span class="badge badge-muted">Brouillon</span>
+      {% elif cn.status == 'applied' %}
+      <span class="badge badge-success">Appliqué</span>
+      {% elif cn.status == 'cancelled' %}
+      <span class="badge badge-danger">Annulé</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="detail-label">Référence</div>
+        <div class="detail-value">{{ cn.ref }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Date</div>
+        <div class="detail-value">{{ cn.date|date:"d/m/Y" }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Statut</div>
+        <div class="detail-value">{{ cn.get_status_display }}</div>
+      </div>
+      {% if cn.invoice %}
+      <div class="detail-field">
+        <div class="detail-label">Facture d'origine</div>
+        <div class="detail-value"><a href="{% url 'invoice-detail' cn.invoice.id %}">{{ cn.invoice.ref }}</a></div>
+      </div>
+      {% endif %}
+      {% if cn.reason %}
+      <div class="detail-field" style="grid-column: 1 / -1;">
+        <div class="detail-label">Motif</div>
+        <div class="detail-value">{{ cn.reason }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+  <div class="card">
+    <div class="card-header">Émetteur</div>
+    <div class="card-body">
+      <p><strong>{{ tenant.legal_name|default:tenant.name }}</strong></p>
+      <p>{{ tenant.address }}</p>
+      {% if tenant.ice %}<p>ICE : {{ tenant.ice }}</p>{% endif %}
+      {% if tenant.identifiant_fiscal %}<p>Identifiant fiscal : {{ tenant.identifiant_fiscal }}</p>{% endif %}
+      {% if tenant.registre_commerce %}<p>Registre du commerce : {{ tenant.registre_commerce }}</p>{% endif %}
+      {% if tenant.taxe_professionnelle %}<p>Taxe professionnelle : {{ tenant.taxe_professionnelle }}</p>{% endif %}
+      {% if tenant.capital_social %}<p>Capital social : {{ tenant.capital_social }}</p>{% endif %}
+      {% if tenant.bank_name %}<p>Banque : {{ tenant.bank_name }}</p>{% endif %}
+      {% if tenant.rib %}<p>RIB : {{ tenant.rib }}</p>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">Client</div>
+    <div class="card-body">
+      <p><strong>{{ cn.customer.name }}</strong></p>
+      <p>{{ cn.customer.address }}</p>
+      {% if cn.customer.ice %}<p>ICE : {{ cn.customer.ice }}</p>{% endif %}
+      {% if cn.customer.identifiant_fiscal %}<p>Identifiant fiscal : {{ cn.customer.identifiant_fiscal }}</p>{% endif %}
+      {% if cn.customer.registre_commerce %}<p>Registre du commerce : {{ cn.customer.registre_commerce }}</p>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header">Détail des lignes</div>
+  <div class="card-body" style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+          <th style="padding: 0.5rem;">#</th>
+          <th style="padding: 0.5rem;">Description</th>
+          <th style="padding: 0.5rem; text-align: right;">Qté</th>
+          <th style="padding: 0.5rem; text-align: right;">Prix Unit. HT</th>
+          <th style="padding: 0.5rem; text-align: right;">TVA %</th>
+          <th style="padding: 0.5rem; text-align: right;">Total HT</th>
+          <th style="padding: 0.5rem; text-align: right;">Total TTC</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in cn.lines.all %}
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 0.5rem;">{{ forloop.counter }}</td>
+          <td style="padding: 0.5rem;">{{ line.product.sku }} — {{ line.product.name }}{% if line.description %}<br><small>{{ line.description }}</small>{% endif %}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.qty }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.unit_price }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.vat_rate }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.total_ht }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.total_ttc }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="border-top: 2px solid var(--border); font-weight: bold;">
+          <td colspan="5" style="padding: 0.5rem;"></td>
+          <td style="padding: 0.5rem; text-align: right;">Total HT</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ cn.total_ht }}</td>
+        </tr>
+        <tr style="border-top: 1px solid var(--border);">
+          <td colspan="5" style="padding: 0.5rem;"></td>
+          <td style="padding: 0.5rem; text-align: right;">TVA</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ cn.total_vat }}</td>
+        </tr>
+        <tr style="border-top: 2px solid var(--border); font-weight: bold; font-size: 1.1em;">
+          <td colspan="5" style="padding: 0.5rem;"></td>
+          <td style="padding: 0.5rem; text-align: right;">Total TTC</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ cn.total_ttc }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+{% if cn.amount_in_words %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body">
+    <p><em>Arrêté le présent avoir à la somme de : {{ cn.amount_in_words }}</em></p>
+  </div>
+</div>
+{% endif %}
+
+{% if tenant.tax_regime == 'franchise' %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body">
+    <p style="color: var(--text-muted); font-style: italic;">TVA non applicable, article 57 du CGI</p>
+  </div>
+</div>
+{% endif %}
+
+{% if cn.vat_exempt_notice %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body">
+    <p style="color: var(--text-muted); font-style: italic;">{{ cn.vat_exempt_notice }}</p>
+  </div>
+</div>
+{% endif %}
+
+{% if cn.payment_terms %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="detail-label">Conditions de paiement</div>
+        <div class="detail-value">{{ cn.get_payment_terms_display }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+  <button onclick="window.print();" class="btn btn-outline">Imprimer</button>
+  <a href="{% url 'cn-edit' cn.id %}" class="btn btn-primary">Modifier</a>
+  <a href="{% url 'cn-list' %}" class="btn btn-outline">Retour</a>
+  <form method="post" action="{% url 'cn-delete' cn.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet avoir ?');">Supprimer</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}BL {{ bl.ref }}{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="margin: 0;">BON DE LIVRAISON</h1>
+    <div>
+      {% if bl.status == 'draft' %}
+      <span class="badge badge-muted">Brouillon</span>
+      {% elif bl.status == 'delivered' %}
+      <span class="badge badge-success">Livré</span>
+      {% elif bl.status == 'partial' %}
+      <span class="badge badge-warning">Partiel</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="detail-label">Référence</div>
+        <div class="detail-value">{{ bl.ref }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Date</div>
+        <div class="detail-value">{{ bl.date|date:"d/m/Y" }}</div>
+      </div>
+      {% if bl.delivery_date %}
+      <div class="detail-field">
+        <div class="detail-label">Date de livraison</div>
+        <div class="detail-value">{{ bl.delivery_date|date:"d/m/Y" }}</div>
+      </div>
+      {% endif %}
+      <div class="detail-field">
+        <div class="detail-label">Statut</div>
+        <div class="detail-value">{{ bl.get_status_display }}</div>
+      </div>
+      {% if bl.po %}
+      <div class="detail-field">
+        <div class="detail-label">BC lié</div>
+        <div class="detail-value"><a href="{% url 'po-detail' bl.po.id %}">{{ bl.po.ref }}</a></div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header">Client</div>
+  <div class="card-body">
+    <p><strong>{{ bl.customer.name }}</strong></p>
+    <p>{{ bl.customer.address }}</p>
+    {% if bl.customer.ice %}<p>ICE : {{ bl.customer.ice }}</p>{% endif %}
+    {% if bl.customer.identifiant_fiscal %}<p>Identifiant fiscal : {{ bl.customer.identifiant_fiscal }}</p>{% endif %}
+    {% if bl.customer.registre_commerce %}<p>Registre du commerce : {{ bl.customer.registre_commerce }}</p>{% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-header">Détail des lignes</div>
+  <div class="card-body" style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+          <th style="padding: 0.5rem;">#</th>
+          <th style="padding: 0.5rem;">Description</th>
+          <th style="padding: 0.5rem; text-align: right;">Qté Commandée</th>
+          <th style="padding: 0.5rem; text-align: right;">Qté Livrée</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in bl.lines.all %}
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 0.5rem;">{{ forloop.counter }}</td>
+          <td style="padding: 0.5rem;">{{ line.product.sku }} — {{ line.product.name }}{% if line.description %}<br><small>{{ line.description }}</small>{% endif %}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.qty_ordered }}</td>
+          <td style="padding: 0.5rem; text-align: right;">{{ line.qty_delivered }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+  <button onclick="window.print();" class="btn btn-outline">Imprimer</button>
+  <a href="{% url 'bl-edit' bl.id %}" class="btn btn-primary">Modifier</a>
+  <a href="{% url 'bl-list' %}" class="btn btn-outline">Retour</a>
+
+  {% if not bl.invoice %}
+  <form method="post" action="{% url 'bl-convert-to-invoice' bl.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-success" style="font-weight:600;">Créer Facture</button>
+  </form>
+  {% else %}
+  <a href="{% url 'invoice-detail' bl.invoice.id %}" class="btn btn-success">Voir Facture {{ bl.invoice.invoice_ref }}</a>
+  {% endif %}
+
+  <form method="post" action="{% url 'bl-delete' bl.id %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce bon de livraison ?');">Supprimer</button>
+  </form>
+</div>
+{% endblock %}
